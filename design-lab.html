@@ -35,6 +35,17 @@ input{font-size:16px!important;}
 </style>
 </head>
 <body>
+<div id="gate" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#08080D;font-family:'Inter',sans-serif;">
+<div style="text-align:center">
+<div style="font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:0.2em;color:#3366FF;margin-bottom:8px">VITALIS DESIGN LAB</div>
+<div style="font-size:13px;color:#666;margin-bottom:24px">Access Required</div>
+<input id="pin" type="password" placeholder="Enter password" style="padding:10px 16px;background:#1A1A2E;border:1px solid #2A2A40;color:#F0F0F4;font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center;width:220px;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('enterBtn').click()"/>
+<br/>
+<button id="enterBtn" onclick="if(document.getElementById('pin').value==='VitalisLab2026!'){sessionStorage.setItem('dl_auth','1');document.getElementById('gate').style.display='none';document.getElementById('lab').style.display='block';}else{document.getElementById('err').style.display='block';document.getElementById('pin').value='';}" style="margin-top:12px;padding:10px 24px;background:#3366FF;color:#fff;border:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;">ENTER</button>
+<div id="err" style="display:none;color:#f87171;font-size:12px;margin-top:12px">Access denied</div>
+</div>
+</div>
+<div id="lab" style="display:none">
 <div id="root"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:Inter,system-ui,sans-serif;color:#666;font-size:14px;text-align:center;padding:20px;"><div style="margin-bottom:8px;">Loading Vitalis Design Lab…</div><div style="font-size:11px;color:#999;">Requires WiFi for fonts and React</div></div></div>
 <script type="text/babel" data-presets="react">
 const {useState,useEffect,useRef,useCallback}=React;
@@ -853,6 +864,10 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</div>
+<script>
+if(sessionStorage.getItem('dl_auth')==='1'){document.getElementById('gate').style.display='none';document.getElementById('lab').style.display='block';}
 </script>
 </body>
 </html>
