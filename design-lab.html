@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>Vitalis — Design Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap"/>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script>
+// Verify CDN scripts loaded — show error if not
+window.addEventListener('DOMContentLoaded',function(){
+  setTimeout(function(){
+    if(!window.React||!window.ReactDOM||!window.Babel){
+      document.getElementById('root').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:Inter,system-ui,sans-serif;color:#888;text-align:center;padding:20px;"><div style="font-size:18px;margin-bottom:8px;">⚠ CDN scripts failed to load</div><div style="font-size:13px;">Make sure you are connected to WiFi, then refresh.</div><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;background:#002FA7;color:white;border:none;font-size:14px;cursor:pointer;">Retry</button></div>';
+    }
+  },8000);
+});
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+button,input,textarea,select{font-family:inherit;outline:none;}
+input{font-size:16px!important;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:rgba(120,120,140,0.3);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+<div id="root"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:Inter,system-ui,sans-serif;color:#666;font-size:14px;text-align:center;padding:20px;"><div style="margin-bottom:8px;">Loading Vitalis Design Lab…</div><div style="font-size:11px;color:#999;">Requires WiFi for fonts and React</div></div></div>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useRef,useCallback}=React;
+
+/* ═══ THEMES (from reference) ═══ */
+const TH={
+  limestone:{bg:"#F5F0EB",card:"rgba(255,255,255,0.85)",border:"#E8E2DB",text:"#1A1A1A",textS:"#4A4A4A",textT:"#6A6A6A",accent:"#002FA7",accentT:"#002FA7",accentSoft:"rgba(0,47,167,0.07)",green:"#0a7a3e",greenSoft:"rgba(10,122,62,0.08)",yellow:"#b8860b",yellowSoft:"rgba(184,134,11,0.08)",red:"#c0392b",redSoft:"rgba(192,57,43,0.08)",hf:"'Cormorant Garamond',Georgia,serif",bf:"'Inter',sans-serif",lf:"'JetBrains Mono',monospace",nf:"'Cormorant Garamond',Georgia,serif",hw:300,blur:false,noise:false,glow:false,navBg:"rgba(245,240,235,0.96)",inputBg:"#F9F7F4",hs:52},
+  cyber:{bg:"#08080D",card:"rgba(20,20,34,0.9)",border:"#2A2A40",text:"#F0F0F4",textS:"#C8C8D4",textT:"#9494A8",accent:"#3366FF",accentT:"#3366FF",accentSoft:"rgba(51,102,255,0.12)",green:"#4ade80",greenSoft:"rgba(74,222,128,0.1)",yellow:"#facc15",yellowSoft:"rgba(250,204,21,0.1)",red:"#f87171",redSoft:"rgba(248,113,113,0.1)",hf:"'JetBrains Mono',monospace",bf:"'Inter',sans-serif",lf:"'JetBrains Mono',monospace",nf:"'JetBrains Mono',monospace",hw:600,blur:false,noise:true,glow:true,navBg:"rgba(8,8,13,0.97)",inputBg:"#1A1A2E",hs:38},
+  glass:{bg:"linear-gradient(135deg,#0a0a14,#07070f,#080d18)",card:"rgba(255,255,255,0.05)",border:"rgba(255,255,255,0.09)",text:"#F0F0F4",textS:"#C8C8D4",textT:"#9494A8",accent:"#3366FF",accentT:"#7EB2FF",accentSoft:"rgba(51,102,255,0.1)",green:"#4ade80",greenSoft:"rgba(74,222,128,0.08)",yellow:"#facc15",yellowSoft:"rgba(250,204,21,0.08)",red:"#f87171",redSoft:"rgba(248,113,113,0.08)",hf:"'Cormorant Garamond',Georgia,serif",bf:"'Inter',sans-serif",lf:"'JetBrains Mono',monospace",nf:"'Cormorant Garamond',Georgia,serif",hw:300,blur:true,noise:true,glow:true,navBg:"rgba(10,10,20,0.75)",inputBg:"rgba(255,255,255,0.04)",hs:50},
+};
+
+/* ═══ LENS DATA (rich versions from reference) ═══ */
+const LENSES=["OG","BIBLE","AAPL","FUNCTION","NEKO","OURA","LEVELS","WHOOP","ZOE"];
+const THEME_LIST=["limestone","cyber","glass"];
+const SITE_PAGES=["landing","platform","science","pricing","about","signin","privacy","terms","compliance"];
+const APP_PAGES=["dashboard","athena","biomarkers","upload","verify-meds","verify-genetics","data-streams","collisions"];
+const ALL_LABELS={landing:"Landing",platform:"Platform",science:"Science",pricing:"Pricing",about:"About",signin:"Sign In",privacy:"Privacy",terms:"Terms",compliance:"Compliance",dashboard:"Dashboard",athena:"Athena Report",biomarkers:"Biomarkers",upload:"Upload Hub","verify-meds":"Verify: Meds","verify-genetics":"Verify: Genetics","data-streams":"Data Streams",collisions:"God Mode"};
+const LENS_COLORS={OG:"#ef4444",BIBLE:"#3366FF",AAPL:"#002FA7",FUNCTION:"#1a6b3a",NEKO:"#7c3aed",OURA:"#0891b2",LEVELS:"#059669",WHOOP:"#dc2626",ZOE:"#d97706"};
+const THEME_COLORS={limestone:"#b8860b",cyber:"#3366FF",glass:"#7EB2FF"};
+
+const V={
+  OG:{mono:false,agg:false,split:false,nav:["Platform","Science","Pricing","About"],signin:"Sign In",cta:"Get Started",lh1:"Vitalis",lh2:"Health Intelligence",lsub:"PhD-level biomarker analysis platform.",ph:"Platform Features",psub:"Core platform capabilities.",sh:"The Science",ssub:"Evidence-based biomarker analysis.",prh:"Pricing",prsub:"Choose a plan.",pop:"Most Popular",ah:"About Vitalis",ah2:"Founded in Dubai.",asub:"A health intelligence platform.",sih:"Sign In",siwelcome:"Welcome back.",lp:"Privacy Policy",lt:"Terms of Service",lc:"Regulatory Compliance"},
+  BIBLE:{mono:true,agg:false,split:false,nav:["PLATFORM","SCIENCE","PRICING","ABOUT"],signin:"ACCESS",cta:"REQUEST ACCESS",lh1:"PHD-LEVEL",lh2:"HEALTH INTELLIGENCE",lsub:"ATHENA v7.1 · MULTI-MODEL CONSENSUS ENGINE · DUBAI.",ph:"PLATFORM ARCHITECTURE",psub:"SIX MODULES. ONE SYSTEM. ZERO COMPROMISES.",sh:"THE EVIDENCE BASE",ssub:"PEER-REVIEWED. VALIDATED. RUTHLESSLY RIGOROUS.",prh:"ACCESS TIERS",prsub:"SELECT YOUR CLEARANCE LEVEL.",pop:"RECOMMENDED",ah:"SYSTEM ORIGIN",ah2:"WHY WE BUILT ATHENA.",asub:"WE BUILT THE TOOL WE WISHED EXISTED.",sih:"SYSTEM ACCESS",siwelcome:"AUTHENTICATE TO CONTINUE.",lp:"PRIVACY POLICY",lt:"TERMS OF SERVICE",lc:"REGULATORY COMPLIANCE"},
+  AAPL:{mono:false,agg:false,split:true,accentH2:true,nav:["Platform","Science","Pricing","About"],signin:"Sign In",cta:"Request Access",lh1:"Know your biology.",lh2:"Command your longevity.",lsub:"Vitalis turns lab results into a precision health strategy. Like having a team of longevity physicians on call — powered by Athena, our multi-AI consensus engine.",ph:"Built for the bio-rich",psub:"Six interconnected modules. One complete picture of your biology.",sh:"Evidence-based. Ruthlessly rigorous.",ssub:"Vitalis is built on peer-reviewed longevity medicine. Every claim is traceable.",prh:"Invest in your biology",prsub:"Three tiers. All include our core AI engine. Dubai pricing. DIFC regulated.",pop:"Most Popular",ah:"About Vitalis",ah2:"Aesop meets Apple\nfor longevity medicine.",asub:"Built with one conviction: the world's most health-conscious individuals deserve a platform that matches their ambition.",sih:"Good to have you back.",siwelcome:"Sign in to your health intelligence dashboard.",lp:"Privacy Policy",lt:"Terms of Service",lc:"Regulatory Compliance"},
+  FUNCTION:{mono:false,agg:false,split:true,nav:["Lab Results","The Evidence","Plans","About"],signin:"Sign In",cta:"Start Your Panel",lh1:"Your labs.",lh2:"Interpreted by experts and AI — together.",lsub:"Most people get a PDF and a shrug. Vitalis gives you a clinician's summary, AI analysis, and longitudinal tracking.",ph:"Your Complete Lab Intelligence System",psub:"From raw results to clinical insight — everything in one place.",sh:"Clinically grounded. Rigorously validated.",ssub:"Every marker and algorithm backed by peer-reviewed evidence.",prh:"Comprehensive panel plans",prsub:"All plans include full lab analysis, clinician summary, and AI interpretation.",pop:"Most Comprehensive",ah:"About Vitalis",ah2:"The team behind your results.",asub:"Clinicians, scientists, and engineers united by one goal: make your lab results matter.",sih:"Access your results.",siwelcome:"Your lab data is waiting.",lp:"Privacy Policy",lt:"Terms of Service",lc:"Regulatory Compliance"},
+  NEKO:{mono:false,agg:false,split:true,accentH2:true,nav:["Platform","The Science","Access","About"],signin:"Sign In",cta:"View Your Map",lh1:"See your biology",lh2:"in full.",lsub:"Not a PDF. Not a spreadsheet. A living map of your entire physiology — updated with every panel and every sync.",ph:"Your Complete Body Intelligence System",psub:"Six modules that map every dimension of your physiology.",sh:"The science behind the map.",ssub:"Every zone and score grounded in validated biomarker science.",prh:"Full access to your map",prsub:"Three levels of biological intelligence. All include the body system overview.",pop:"Full Access",ah:"About Vitalis",ah2:"We built the tool\nwe wished existed.",asub:"A complete picture of human biology — not a spreadsheet, beautifully designed and medically rigorous.",sih:"Your map awaits.",siwelcome:"Sign in to access your full body intelligence.",lp:"Privacy Policy",lt:"Terms of Service",lc:"Regulatory Compliance"},
+  OURA:{mono:false,agg:false,split:false,nav:["Platform","Science","Plans","About"],signin:"Sign In",cta:"Get Your Score",lh1:"One score.",lh2:"Your entire health picture.",lsub:"Vitalis synthesises 300+ biomarkers into a single Vitality Score — and tells you exactly what to do about it.",ph:"Everything that shapes your score",psub:"Six systems working together to give you one clear, actionable number.",sh:"What goes into your score.",ssub:"The science behind every point of your Vitality Index.",prh:"Your score, your way",prsub:"Three plans. All include your Vitality Score and daily health intelligence.",pop:"Most Popular",ah:"About Vitalis",ah2:"Why we built a single score.",asub:"Because complexity is the enemy of action. One number — backed by 300+ biomarkers — can change how you live.",sih:"Check your score.",siwelcome:"Sign in to see today's Vitality readiness.",lp:"Privacy Policy",lt:"Terms of Service",lc:"Regulatory Compliance"},
+  LEVELS:{mono:false,agg:false,split:true,nav:["Platform","The Evidence","Pricing","About"],signin:"Sign In",cta:"Start Tracking",lh1:"See the consequence",lh2:"of every choice.",lsub:"Every lab value, every meal, every night of sleep — scored against your unique biology. Close the loop.",ph:"Close the loop on your biology",psub:"Six modules that connect every choice to every biological outcome.",sh:"The science of biological feedback.",ssub:"How your choices connect to your biomarkers — and what to do about it.",prh:"Invest in your outcomes",prsub:"Plans built around your biology, not a generic subscription.",pop:"Best Value",ah:"About Vitalis",ah2:"We believe choices\nshould have context.",asub:"Vitalis was built to close the loop between your biology and your daily decisions — with data, not guilt.",sih:"See today's data.",siwelcome:"Your biology has been tracking. Sign in to see it.",lp:"Privacy Policy",lt:"Terms of Service",lc:"Regulatory Compliance"},
+  WHOOP:{mono:true,agg:true,split:false,nav:["PLATFORM","SCIENCE","PRICING","ABOUT"],signin:"SIGN IN",cta:"START NOW",lh1:"PUSH HARDER.",lh2:"RECOVER SMARTER.",lsub:"VITALIS TRACKS THE RELATIONSHIP BETWEEN YOUR EXERTION AND YOUR BIOLOGY. KNOW YOUR STRAIN. KNOW YOUR LIMITS. KNOW WHEN TO GO.",ph:"YOUR PERFORMANCE STACK",psub:"SIX MODULES. BUILT FOR THOSE WHO DEMAND MORE.",sh:"THE SCIENCE OF PERFORMANCE",ssub:"WHAT DRIVES YOUR STRAIN. WHAT BUILDS YOUR RECOVERY.",prh:"CHOOSE YOUR LEVEL",prsub:"THREE TIERS. ALL BUILT FOR PERFORMANCE.",pop:"TOP TIER",ah:"ABOUT VITALIS",ah2:"WE BUILT THIS\nFOR ATHLETES.",asub:"FOR PEOPLE WHO PUSH HARD AND DEMAND TO KNOW WHY THEY SHOULD RECOVER.",sih:"CHECK YOUR STATUS.",siwelcome:"SIGN IN. SEE YOUR RECOVERY. TRAIN ACCORDINGLY.",lp:"PRIVACY POLICY",lt:"TERMS OF SERVICE",lc:"REGULATORY COMPLIANCE"},
+  ZOE:{mono:false,agg:false,split:true,accentH2:true,nav:["Platform","The Science","Plans","About"],signin:"Sign In",cta:"Discover Your Foods",lh1:"Eat for",lh2:"your biology.",lsub:"No two people respond to food the same way. Vitalis scores every meal against your unique biomarker profile — gut, metabolic, cardiovascular.",ph:"Intelligence personalised to you",psub:"Six modules built around your unique biological responses — not population averages.",sh:"Why your biology is unique.",ssub:"The science of personalised nutrition and metabolic response.",prh:"Your personalised nutrition plan",prsub:"All plans include your unique food intelligence scores.",pop:"Most Popular",ah:"About Vitalis",ah2:"Food is information.\nWe decode it.",asub:"Built on the science of personalised nutrition — every recommendation grounded in your specific biology.",sih:"Back to your nutrition intelligence.",siwelcome:"Sign in to see your personalised food scores.",lp:"Privacy Policy",lt:"Terms of Service",lc:"Regulatory Compliance"},
+};
+
+/* ═══ RESPONSIVE HOOK ═══ */
+function useIsMobile(){const [m,setM]=useState(window.innerWidth<768);useEffect(()=>{const h=()=>setM(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);return m;}
+
+/* ═══ PRIMITIVES ═══ */
+function Noise({t}){if(!t.noise)return null;return <svg style={{position:"fixed",inset:0,width:"100%",height:"100%",pointerEvents:"none",opacity:0.04,zIndex:0}}><filter id="vfn"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#vfn)"/></svg>;}
+function Glow({t}){if(!t.glow)return null;return <div style={{position:"fixed",top:"10%",left:"30%",width:700,height:500,background:`radial-gradient(ellipse,${t.accent}0d 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>;}
+function Lbl({t,children,s={}}){return <div style={{fontSize:9,fontFamily:t.lf,letterSpacing:"0.22em",color:t.textT,textTransform:"uppercase",marginBottom:10,...s}}>{children}</div>;}
+function Card({t,children,s={}}){return <div style={{background:t.card,border:`1px solid ${t.border}`,backdropFilter:t.blur?"blur(20px)":"none",padding:"22px",...s}}>{children}</div>;}
+function Btn({t,v,children,onClick,primary,full}){const ir=v&&v.agg&&primary;return <button onClick={onClick} style={{padding:"10px 24px",background:ir?t.red:primary?t.accent:"transparent",border:`1.5px solid ${ir?t.red:primary?t.accent:t.border}`,borderRadius:0,color:primary?"#fff":t.textS,fontSize:10,fontFamily:t.lf,letterSpacing:"0.14em",cursor:"pointer",textTransform:"uppercase",fontWeight:primary?600:400,width:full?"100%":"auto"}}>{children}</button>;}
+function Badge({t,color,bg,children,s={}}){return <span style={{display:"inline-block",padding:"3px 10px",fontSize:9,fontFamily:t.lf,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600,color,background:bg,...s}}>{children}</span>;}
+function StatusDot({color}){return <span style={{display:"inline-block",width:6,height:6,background:color,borderRadius:"50%",marginRight:6}}/>;}
+function ScoreRing({t,score=60,size=120}){const r=45,c=2*Math.PI*r,off=c-(score/100)*c,col=score>=80?t.green:score>=50?t.yellow:t.red;return <svg width={size} height={size} viewBox="0 0 100 100" style={{transform:"rotate(-90deg)"}}><circle cx="50" cy="50" r={r} fill="none" stroke={t.border} strokeWidth="6"/><circle cx="50" cy="50" r={r} fill="none" stroke={col} strokeWidth="6" strokeDasharray={c} strokeDashoffset={off} strokeLinecap="butt" style={{transition:"stroke-dashoffset 1s"}}/><text x="50" y="50" textAnchor="middle" dominantBaseline="central" style={{transform:"rotate(90deg)",transformOrigin:"50% 50%",fontSize:28,fontFamily:t.nf,fontWeight:t.hw,fill:t.text}}>{score}</text><text x="50" y="66" textAnchor="middle" dominantBaseline="central" style={{transform:"rotate(90deg)",transformOrigin:"50% 50%",fontSize:7,fontFamily:t.lf,letterSpacing:"0.15em",fill:t.textT}}>SCORE</text></svg>;}
+
+/* ════════════════════════════════════════
+   MARKETING SITE PAGES (rich content from reference + mob prop)
+   ════════════════════════════════════════ */
+
+function Landing({t,v,setPage,mob}){
+  const [cnt,setCnt]=useState(0);
+  useEffect(()=>{const x=setInterval(()=>setCnt(c=>c<847?c+11:847),12);return()=>clearInterval(x);},[]);
+  const sp=v.split&&!mob;
+  return(
+    <div style={{padding:mob?"0 20px 40px":"0 40px 60px",fontFamily:t.bf,color:t.text}}>
+      <section style={{minHeight:mob?"auto":"85vh",display:"grid",gridTemplateColumns:sp?"1fr 1fr":"1fr",alignItems:"center",gap:sp?60:0,paddingTop:mob?20:40,paddingBottom:mob?30:60}}>
+        <div style={{textAlign:sp?"left":"center",maxWidth:sp?"none":600,margin:sp?"0":"0 auto"}}>
+          <Lbl t={t}>{v.mono?"ATHENA v7.1 · DUBAI":"The Family Office for Biology"}</Lbl>
+          <h1 style={{fontSize:mob?t.hs*0.7:t.hs,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:v.mono?"-0.01em":"-0.03em",lineHeight:1.05,margin:"0 0 20px"}}>
+            {v.lh1}<br/><span style={{color:v.accentH2?t.accent:t.text}}>{v.lh2}</span>
+          </h1>
+          <p style={{fontSize:mob?13:14,color:t.textS,lineHeight:1.8,maxWidth:460,margin:sp?"0 0 32px":"0 auto 32px"}}>{v.lsub}</p>
+          <div style={{display:"flex",gap:12,justifyContent:sp?"flex-start":"center",flexWrap:"wrap"}}>
+            <Btn t={t} v={v} primary onClick={()=>setPage("signin")}>{v.cta}</Btn>
+            <Btn t={t} v={v} onClick={()=>setPage("platform")}>{v.mono?"VIEW PLATFORM":"View Platform"}</Btn>
+          </div>
+          {!sp&&<div style={{display:"flex",gap:mob?20:36,justifyContent:"center",marginTop:48,flexWrap:"wrap"}}>
+            {[{val:cnt,u:"/1000",l:v.mono?"VITALITY SCORE":"Vitality Score"},{val:"284",u:"markers",l:v.mono?"BIOMARKERS":"Biomarkers"},{val:"31",u:"yrs",l:v.mono?"BIO AGE":"Bio Age"},{val:"7+",u:"yrs",l:v.mono?"ADVANTAGE":"Advantage"}].map((m,i)=>(
+              <div key={i} style={{textAlign:"center"}}>
+                <div style={{fontSize:mob?24:32,fontFamily:t.nf,fontWeight:t.hw,color:i===0?t.accent:t.text,lineHeight:1}}>{m.val}<span style={{fontSize:11,color:t.textT,fontFamily:t.lf,marginLeft:2}}>{m.u}</span></div>
+                <div style={{fontSize:9,fontFamily:t.lf,letterSpacing:"0.18em",color:t.textT,marginTop:4,textTransform:"uppercase"}}>{m.l}</div>
+              </div>
+            ))}
+          </div>}
+        </div>
+        {sp&&<div style={{position:"relative"}}>
+          {t.glow&&<div style={{position:"absolute",inset:-20,background:`radial-gradient(ellipse,${t.accentSoft} 0%,transparent 70%)`,pointerEvents:"none"}}/>}
+          <Card t={t}>
+            <Lbl t={t}>{v.mono?"VITALITY INTELLIGENCE · LIVE":"Vitality Intelligence · Live"}</Lbl>
+            <div style={{display:"flex",alignItems:"flex-end",gap:20,marginBottom:22}}>
+              <div>
+                <div style={{fontSize:60,fontFamily:t.nf,fontWeight:t.hw,color:t.accent,lineHeight:1,letterSpacing:"-0.04em"}}>{cnt}</div>
+                <div style={{fontSize:9,fontFamily:t.lf,letterSpacing:"0.14em",color:t.textT,marginTop:4,textTransform:"uppercase"}}>Vitality Score · /1000</div>
+              </div>
+              <div style={{paddingBottom:8,borderLeft:`1px solid ${t.border}`,paddingLeft:16}}>
+                <div style={{fontSize:11,color:t.green,fontFamily:t.lf,letterSpacing:"0.1em",marginBottom:4,textTransform:"uppercase"}}>Excellent</div>
+                <div style={{fontSize:12,color:t.textS}}>Bio Age: <span style={{color:t.green,fontFamily:t.nf,fontSize:18}}>31</span> yrs</div>
+                <div style={{fontSize:11,color:t.textT,marginTop:2}}>7 years younger</div>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+              {[{l:"hs-CRP",val:"0.4",u:"mg/L",c:t.green},{l:"ApoB",val:"72",u:"mg/dL",c:t.green},{l:"Vit D",val:"38",u:"ng/mL",c:t.yellow}].map((m,i)=>(
+                <div key={i} style={{background:t.accentSoft,border:`1px solid ${t.border}`,padding:"10px 12px"}}>
+                  <div style={{fontSize:8,fontFamily:t.lf,letterSpacing:"0.14em",color:t.textT,textTransform:"uppercase",marginBottom:4}}>{m.l}</div>
+                  <span style={{fontSize:18,fontFamily:t.nf,fontWeight:t.hw,color:m.c}}>{m.val}</span>
+                  <span style={{fontSize:9,color:t.textT,marginLeft:3,fontFamily:t.lf}}>{m.u}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>}
+      </section>
+      <div style={{textAlign:"center",marginBottom:28}}>
+        <Lbl t={t}>{v.mono?"THE PLATFORM":"The Platform"}</Lbl>
+        <h2 style={{fontSize:mob?t.hs*0.5:t.hs*0.65,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.02em"}}>{v.mono?"EVERYTHING YOUR LONGEVITY DEMANDS":"Everything your longevity demands"}</h2>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(3,1fr)",gap:10}}>
+        {[{tag:"CORE",ti:v.mono?"BIOMARKER ANALYSIS":"Biomarker Analysis",b:"300+ markers with dual clinical and longevity reference ranges."},{tag:"AI ENGINE",ti:v.mono?"ATHENA AI ENGINE":"Athena AI Engine",b:"Multi-model consensus: Gemini, Claude, GPT-4. Conflicts flagged."},{tag:"TIMELINE",ti:v.mono?"LONGITUDINAL HISTORY":"Longitudinal History",b:"Every panel, every trend, every protocol — your biology over time."}].map((f,i)=>(
+          <Card key={i} t={t}>
+            <div style={{fontSize:8,fontFamily:t.lf,letterSpacing:"0.2em",color:t.accent,textTransform:"uppercase",marginBottom:10}}>{f.tag}</div>
+            <div style={{fontSize:14,fontFamily:"'Inter',sans-serif",fontWeight:500,color:t.text,marginBottom:8}}>{f.ti}</div>
+            <p style={{margin:0,fontSize:12,color:t.textS,lineHeight:1.7}}>{f.b}</p>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Platform({t,v,setPage,mob}){
+  const feats=[
+    {ti:v.mono?"BIOMARKER INTELLIGENCE":"Biomarker Intelligence",b:"Upload any lab panel. 300+ markers with dual clinical and longevity reference ranges.",sub:["PDF upload & auto-parse","Dual clinical + longevity ranges","Trend detection"]},
+    {ti:v.mono?"ATHENA AI CONSENSUS":"Athena AI Consensus",b:"Gemini, Claude, and GPT-4 simultaneously. Consensus shown. Disagreements surfaced.",sub:["Multi-model cross-reference","Confidence scoring","Plain-English summaries"]},
+    {ti:v.mono?"LONGITUDINAL TIMELINE":"Longitudinal Timeline",b:"Every panel mapped over time. See the impact of every protocol and lifestyle change.",sub:["Full history visualisation","Protocol impact tracking","Biological age trajectory"]},
+    {ti:v.mono?"PROTOCOL STACK":"Protocol Stack",b:"Supplements, medications, lifestyle — tracked against your biomarker response.",sub:["Supplement tracking","Drug interaction checking","Outcome correlation"]},
+    {ti:v.mono?"WEARABLE INTEGRATION":"Wearable Integration",b:"Oura Ring, WHOOP, Apple Health. Continuous data layered over lab results.",sub:["Oura Ring sync","Apple Health import","HRV & sleep correlation"]},
+    {ti:v.mono?"PHARMACOGENOMICS":"Genetics & Pharmacogenomics",b:"CYP450 variants mapped to your current protocol — interactions flagged.",sub:["CYP450 analysis","SNP interpretation","Personalised dosing"]},
+  ];
+  return(
+    <div style={{padding:mob?"0 20px 40px":"0 40px 60px",fontFamily:t.bf,color:t.text}}>
+      <div style={{textAlign:"center",marginBottom:44,paddingTop:20}}>
+        <Lbl t={t}>{v.mono?"THE PLATFORM":"The Platform"}</Lbl>
+        <h1 style={{fontSize:mob?t.hs*0.65:t.hs,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.03em",lineHeight:1.05,marginBottom:14}}>{v.ph}</h1>
+        <p style={{fontSize:14,color:t.textS,lineHeight:1.8,maxWidth:500,margin:"0 auto 22px"}}>{v.psub}</p>
+        <Btn t={t} v={v} primary onClick={()=>setPage("pricing")}>{v.mono?"VIEW PRICING":"View Pricing"}</Btn>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(3,1fr)",gap:10,marginBottom:32}}>
+        {feats.map((f,i)=>(
+          <Card key={i} t={t}>
+            <div style={{fontSize:8,fontFamily:t.lf,letterSpacing:"0.2em",color:t.accent,textTransform:"uppercase",marginBottom:8}}>Module {i+1}</div>
+            <div style={{fontSize:14,fontFamily:"'Inter',sans-serif",fontWeight:500,color:t.text,marginBottom:8}}>{f.ti}</div>
+            <p style={{fontSize:12,color:t.textS,lineHeight:1.7,margin:"0 0 12px"}}>{f.b}</p>
+            <div style={{borderTop:`1px solid ${t.border}`,paddingTop:10}}>
+              {f.sub.map((s,j)=><div key={j} style={{fontSize:11,color:t.textT,fontFamily:t.lf,marginBottom:4,display:"flex",gap:6}}><span style={{color:t.accent,flexShrink:0,fontSize:8}}>—</span>{s}</div>)}
+            </div>
+          </Card>
+        ))}
+      </div>
+      <Card t={t} s={{textAlign:"center",padding:"30px 40px"}}>
+        <h2 style={{fontSize:t.hs*0.6,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.02em",marginBottom:12}}>{v.mono?"YOUR BIOLOGY IS WAITING":"Your biology is waiting"}</h2>
+        <p style={{fontSize:13,color:t.textS,margin:"0 auto 20px",maxWidth:400,lineHeight:1.7}}>Join the first cohort accessing Vitalis in Dubai. DIFC Innovation Licence · Medically supervised.</p>
+        <Btn t={t} v={v} primary onClick={()=>setPage("signin")}>{v.cta}</Btn>
+      </Card>
+    </div>
+  );
+}
+
+function Science({t,v,mob}){
+  const pillars=[
+    {n:1,ti:v.mono?"BIOMARKER SCIENCE":"Biomarker Science",b:"300+ markers across cardiovascular, metabolic, hormonal, nutritional, inflammatory, and genetic domains. Each carries dual reference ranges: standard clinical and longevity-optimised.",cite:"Based on peer-reviewed longevity medicine research from Peter Attia MD, Valter Longo PhD, and the Buck Institute."},
+    {n:2,ti:v.mono?"MULTI-AI CONSENSUS":"Multi-AI Consensus",b:"Athena routes your data through three frontier AI models simultaneously. Each generates an independent interpretation. A consensus layer identifies agreement and flags divergence with confidence scoring.",cite:"Modelled on clinical consensus methodology — the approach used in tumour boards and specialist referrals."},
+    {n:3,ti:v.mono?"BIOLOGICAL AGE":"Biological Age",b:"Biological age calculated using validated biomarker panels including epigenetic proxies, metabolic markers, and inflammatory indices. Calibrated against longitudinal cohort data.",cite:"Grounded in Horvath clock methodology and adapted for blood-based biomarker panels."},
+    {n:4,ti:v.mono?"PHARMACOGENOMICS":"Pharmacogenomics",b:"CYP450 enzyme variants determine how you metabolise drugs and supplements. Your genetic variants mapped to your current protocol — flagging interactions and adjusting dosing guidance.",cite:"Based on CPIC (Clinical Pharmacogenomics Implementation Consortium) guidelines."},
+  ];
+  return(
+    <div style={{padding:mob?"0 20px 40px":"0 40px 60px",fontFamily:t.bf,color:t.text}}>
+      <div style={{textAlign:"center",marginBottom:44,paddingTop:20}}>
+        <Lbl t={t}>{v.mono?"THE SCIENCE":"The Science"}</Lbl>
+        <h1 style={{fontSize:mob?t.hs*0.65:t.hs,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.03em",lineHeight:1.05,marginBottom:14}}>{v.sh}</h1>
+        <p style={{fontSize:14,color:t.textS,lineHeight:1.8,maxWidth:500,margin:"0 auto"}}>{v.ssub}</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:10,marginBottom:32}}>
+        {pillars.map((p,i)=>(
+          <Card key={i} t={t} s={{padding:"24px"}}>
+            <div style={{fontSize:8,fontFamily:t.lf,letterSpacing:"0.22em",color:t.accent,textTransform:"uppercase",marginBottom:10}}>{v.mono?`PILLAR ${p.n}`:`Pillar ${p.n}`}</div>
+            <div style={{fontSize:17,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:12}}>{p.ti}</div>
+            <p style={{fontSize:12,color:t.textS,lineHeight:1.75,margin:"0 0 12px"}}>{p.b}</p>
+            <div style={{background:t.accentSoft,borderLeft:`2px solid ${t.accent}`,padding:"10px 12px"}}>
+              <p style={{margin:0,fontSize:11,color:t.textT,lineHeight:1.6,fontStyle:"italic"}}>{p.cite}</p>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <Lbl t={t}>{v.mono?"BIOMARKER COVERAGE":"Biomarker Coverage"}</Lbl>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
+        {["Cardiovascular","Metabolic","Hormonal","Thyroid","Haematology","Inflammation","Nutrition","Renal","Hepatic","Longevity Markers","Genetics","Epigenetics"].map((c,i)=>(
+          <div key={i} style={{border:`1px solid ${t.border}`,background:t.card,padding:"7px 14px",fontSize:10,fontFamily:t.lf,color:t.textS,letterSpacing:"0.1em",textTransform:"uppercase"}}>{c}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Pricing({t,v,setPage,mob}){
+  const plans=[
+    {name:v.mono?"FOUNDATION":"Foundation",price:"AED 490",per:"/month",desc:"For the health-conscious individual beginning their longevity journey.",feats:["Up to 2 lab panels / year","Athena AI analysis","Biomarker dashboard","Basic trend tracking","Email support"],hi:false},
+    {name:v.mono?"INTELLIGENCE":"Intelligence",price:"AED 990",per:"/month",desc:"For the serious optimiser who treats their biology as an investment.",feats:["Unlimited lab panels","Full Athena consensus engine","Longitudinal timeline","Protocol stack tracking","Wearable integration","Priority support","Quarterly physician review"],hi:true},
+    {name:v.mono?"CONCIERGE":"Concierge",price:v.mono?"CUSTOM":"Custom",per:"",desc:"For ultra-high-net-worth individuals and family offices.",feats:["Everything in Intelligence","Dedicated longevity physician","Home blood draw service","Pharmacogenomics report","Monthly 1:1 strategy session","Dubai concierge team"],hi:false},
+  ];
+  return(
+    <div style={{padding:mob?"0 20px 40px":"0 40px 60px",fontFamily:t.bf,color:t.text}}>
+      <div style={{textAlign:"center",marginBottom:44,paddingTop:20}}>
+        <Lbl t={t}>{v.mono?"PRICING":"Pricing"}</Lbl>
+        <h1 style={{fontSize:mob?t.hs*0.65:t.hs,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.03em",lineHeight:1.05,marginBottom:14}}>{v.prh}</h1>
+        <p style={{fontSize:14,color:t.textS,lineHeight:1.8,maxWidth:440,margin:"0 auto"}}>{v.prsub}</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(3,1fr)",gap:10,marginBottom:22}}>
+        {plans.map((p,i)=>(
+          <div key={i} style={{background:p.hi?t.accentSoft:t.card,border:`${p.hi?2:1}px solid ${p.hi?t.accent:t.border}`,backdropFilter:t.blur?"blur(20px)":"none",padding:"28px 24px",position:"relative"}}>
+            {p.hi&&<div style={{position:"absolute",top:-1,left:0,right:0,height:2,background:t.accent}}/>}
+            {p.hi&&<div style={{position:"absolute",top:12,right:12,fontSize:8,fontFamily:t.lf,color:t.accent,background:t.accentSoft,border:`1px solid ${t.accent}40`,padding:"2px 8px",letterSpacing:"0.1em",textTransform:"uppercase"}}>{v.pop}</div>}
+            <div style={{fontSize:8,fontFamily:t.lf,letterSpacing:"0.2em",color:t.textT,textTransform:"uppercase",marginBottom:10}}>{p.name}</div>
+            <div style={{marginBottom:6}}><span style={{fontSize:34,fontFamily:t.nf,fontWeight:t.hw,color:p.hi?t.accent:t.text,letterSpacing:"-0.03em"}}>{p.price}</span><span style={{fontSize:11,color:t.textT,fontFamily:t.lf,marginLeft:4}}>{p.per}</span></div>
+            <p style={{fontSize:12,color:t.textS,lineHeight:1.65,margin:"0 0 16px"}}>{p.desc}</p>
+            <div style={{borderTop:`1px solid ${t.border}`,paddingTop:14,marginBottom:18}}>
+              {p.feats.map((f,j)=><div key={j} style={{fontSize:11,color:t.textS,marginBottom:7,display:"flex",alignItems:"flex-start",gap:8}}><span style={{color:t.green,fontSize:10,flexShrink:0}}>✓</span>{f}</div>)}
+            </div>
+            <Btn t={t} v={v} primary={p.hi} full onClick={()=>setPage("signin")}>{(p.price==="Custom"||p.price==="CUSTOM")?(v.mono?"CONTACT US":"Contact Us"):(v.mono?"GET STARTED":"Get Started")}</Btn>
+          </div>
+        ))}
+      </div>
+      <Card t={t} s={{textAlign:"center",padding:"16px 40px"}}>
+        <div style={{display:"flex",gap:mob?12:24,justifyContent:"center",flexWrap:"wrap"}}>
+          {["DIFC Innovation Licence","Dubai-based clinical oversight","AES-256 encryption","UAE PDPL compliant","No data sold, ever"].map((f,i)=>(
+            <span key={i} style={{fontSize:11,color:t.textS,fontFamily:t.lf}}>{v.mono?f.toUpperCase():f}</span>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function About({t,v,setPage,mob}){
+  return(
+    <div style={{padding:mob?"0 20px 40px":"0 40px 60px",fontFamily:t.bf,color:t.text}}>
+      <div style={{maxWidth:720,margin:"0 auto",paddingTop:20}}>
+        <Lbl t={t}>{v.mono?"ABOUT VITALIS":"About Vitalis"}</Lbl>
+        <h1 style={{fontSize:mob?t.hs*0.6:t.hs,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.03em",lineHeight:1.05,marginBottom:20,whiteSpace:"pre-line"}}>{v.ah2}</h1>
+        <p style={{fontSize:14,color:t.textS,lineHeight:1.85,marginBottom:18}}>{v.asub}</p>
+        <p style={{fontSize:13,color:t.textS,lineHeight:1.85,marginBottom:28}}>{v.mono?"WE BUILT ATHENA — A MULTI-MODEL AI CONSENSUS ENGINE. GEMINI, CLAUDE, GPT-4. SIMULTANEOUSLY. BECAUSE NO SINGLE MODEL SHOULD DECIDE YOUR HEALTH TRAJECTORY.":"We built Athena — a multi-model AI consensus engine routing your biomarker data through Gemini, Claude, and GPT-4 simultaneously. Because no single model should decide your health trajectory."}</p>
+        <div style={{display:"grid",gridTemplateColumns:mob?"1fr 1fr":"1fr 1fr",gap:10,marginBottom:24}}>
+          {[{l:v.mono?"FOUNDED":"Founded",val:"2025",s:"Dubai, DIFC"},{l:v.mono?"LICENCE":"Licence",val:"DIFC",s:"Innovation Licence · Healthcare"},{l:v.mono?"AI MODELS":"AI Models",val:"3",s:"Gemini · Claude · GPT-4"},{l:v.mono?"BIOMARKERS":"Biomarkers",val:"300+",s:"Clinical + Longevity ranges"}].map((s,i)=>(
+            <Card key={i} t={t} s={{padding:"18px 20px"}}>
+              <div style={{fontSize:9,fontFamily:t.lf,letterSpacing:"0.18em",color:t.textT,textTransform:"uppercase",marginBottom:6}}>{s.l}</div>
+              <div style={{fontSize:30,fontFamily:t.nf,fontWeight:t.hw,color:t.accent,lineHeight:1,marginBottom:4}}>{s.val}</div>
+              <div style={{fontSize:11,color:t.textT,fontFamily:t.lf}}>{s.s}</div>
+            </Card>
+          ))}
+        </div>
+        <Card t={t} s={{marginBottom:22,borderLeft:`3px solid ${t.accent}`,padding:"20px 22px"}}>
+          <Lbl t={t}>{v.mono?"OUR MISSION":"Our Mission"}</Lbl>
+          <p style={{margin:0,fontSize:v.mono?13:18,color:t.text,lineHeight:1.8,fontFamily:t.hf,fontWeight:t.hw,fontStyle:v.mono?"normal":"italic"}}>{v.mono?'"EVERY PERSON DESERVES TO UNDERSTAND THEIR OWN BIOLOGY — NOT JUST WHEN THEY\'RE SICK, BUT AS A CONTINUOUS, OPTIMISABLE SYSTEM."':'"Every person deserves to understand their own biology — not just when they\'re sick, but as a continuous, optimisable system."'}</p>
+        </Card>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <Btn t={t} v={v} primary onClick={()=>setPage("platform")}>{v.mono?"EXPLORE PLATFORM":"Explore Platform"}</Btn>
+          <Btn t={t} v={v} onClick={()=>setPage("science")}>{v.mono?"READ THE SCIENCE":"Read the Science"}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SignIn({t,v,setPage,mob}){
+  const [email,setEmail]=useState("");const [pw,setPw]=useState("");
+  const inp={width:"100%",padding:"11px 14px",background:t.card,border:`1px solid ${t.border}`,borderRadius:0,color:t.text,fontSize:13,fontFamily:t.bf,outline:"none",boxSizing:"border-box"};
+  return(
+    <div style={{padding:"20px 20px 60px",fontFamily:t.bf,color:t.text,display:"flex",justifyContent:"center"}}>
+      <div style={{width:"100%",maxWidth:420,paddingTop:20}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          {v.mono?<div style={{fontSize:13,fontFamily:t.lf,letterSpacing:"0.25em",color:t.accent,textTransform:"uppercase",marginBottom:10}}>VITALIS</div>:<div style={{fontSize:20,fontFamily:t.hf,fontWeight:600,letterSpacing:"0.08em",color:t.accent,marginBottom:10}}>Vitalis</div>}
+          <h1 style={{fontSize:v.mono?18:26,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.02em",lineHeight:1.1,marginBottom:6}}>{v.sih}</h1>
+          <p style={{fontSize:12,color:t.textT,fontFamily:t.lf,letterSpacing:"0.06em"}}>{v.siwelcome}</p>
+        </div>
+        <Card t={t} s={{padding:"28px 26px"}}>
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:9,fontFamily:t.lf,letterSpacing:"0.18em",color:t.textT,textTransform:"uppercase",marginBottom:7}}>{v.mono?"EMAIL ADDRESS":"Email Address"}</div>
+            <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={inp}/>
+          </div>
+          <div style={{marginBottom:22}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}>
+              <div style={{fontSize:9,fontFamily:t.lf,letterSpacing:"0.18em",color:t.textT,textTransform:"uppercase"}}>{v.mono?"PASSWORD":"Password"}</div>
+              <button style={{background:"none",border:"none",cursor:"pointer",fontSize:10,fontFamily:t.lf,color:t.accentT,letterSpacing:"0.08em",textTransform:"uppercase"}}>{v.mono?"FORGOT?":"Forgot?"}</button>
+            </div>
+            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="••••••••" style={inp}/>
+          </div>
+          <Btn t={t} v={v} primary full onClick={()=>{}}>{v.mono?"SIGN IN":"Sign In"}</Btn>
+          <div style={{marginTop:18,paddingTop:18,borderTop:`1px solid ${t.border}`,textAlign:"center"}}>
+            <span style={{fontSize:11,color:t.textT}}>{v.mono?"NO ACCOUNT? ":"Don't have an account? "}</span>
+            <button onClick={()=>setPage("pricing")} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:t.accentT,fontFamily:t.bf,textDecoration:"underline"}}>{v.mono?"REQUEST ACCESS":"Request Access"}</button>
+          </div>
+        </Card>
+        <p style={{textAlign:"center",fontSize:9,color:t.textT,fontFamily:t.lf,letterSpacing:"0.1em",marginTop:14,textTransform:"uppercase"}}>DIFC · DUBAI · AES-256 ENCRYPTED</p>
+      </div>
+    </div>
+  );
+}
+
+function Legal({t,v,type,mob}){
+  const titles={privacy:v.lp,terms:v.lt,compliance:v.lc};
+  const sections={
+    privacy:[
+      {h:v.mono?"DATA WE COLLECT":"Data We Collect",b:"Vitalis collects biomarker data, lab reports, wearable data, and personal health information you choose to upload. We also collect standard usage data to improve platform performance."},
+      {h:v.mono?"HOW WE USE YOUR DATA":"How We Use Your Data",b:"Your health data is used exclusively to provide the Vitalis service. We do not use your data to train AI models without explicit consent."},
+      {h:v.mono?"DATA STORAGE & SECURITY":"Data Storage & Security",b:"All data is stored on AES-256 encrypted servers within the UAE. We do not transfer personal health data outside the UAE without your explicit consent, except where required by law."},
+      {h:v.mono?"THIRD-PARTY SHARING":"Third-Party Sharing",b:"Vitalis does not sell, rent, or share your personal health data with third parties for commercial purposes."},
+      {h:v.mono?"YOUR RIGHTS":"Your Rights",b:"Under UAE Federal Law No. 45 of 2021 (PDPL) and DIFC Data Protection Law, you have the right to access, correct, delete, and port your data. Contact privacy@vitalis.app."},
+      {h:v.mono?"CONTACT":"Contact",b:"Vitalis · DIFC Innovation Hub · Dubai International Financial Centre · Dubai, UAE · privacy@vitalis.app"},
+    ],
+    terms:[
+      {h:v.mono?"MEDICAL DISCLAIMER":"Medical Disclaimer",b:"Vitalis is a health intelligence platform, not a medical practice. All content and AI-generated insights are for informational purposes only and do not constitute medical advice, diagnosis, or treatment."},
+      {h:v.mono?"ELIGIBILITY":"Eligibility",b:"Vitalis is available to individuals 18 years and older. By using the platform, you confirm you are of legal age and agree to these terms."},
+      {h:v.mono?"ACCEPTABLE USE":"Acceptable Use",b:"You may not use Vitalis for any unlawful purpose, upload data that does not belong to you, or attempt to reverse-engineer or redistribute any part of the platform."},
+      {h:v.mono?"INTELLECTUAL PROPERTY":"Intellectual Property",b:"All platform content, design, AI models, and algorithms are the intellectual property of Vitalis. Unauthorised reproduction is prohibited."},
+      {h:v.mono?"LIMITATION OF LIABILITY":"Limitation of Liability",b:"Vitalis is not liable for any health decisions made based on platform insights. We are not responsible for the accuracy of third-party lab results uploaded to the platform."},
+      {h:v.mono?"GOVERNING LAW":"Governing Law",b:"These terms are governed by DIFC Law. Any dispute shall be resolved through DIFC Courts, Dubai, UAE."},
+    ],
+    compliance:[
+      {h:v.mono?"DIFC INNOVATION LICENCE":"DIFC Innovation Licence",b:"Vitalis operates under a DIFC Innovation Licence issued by the Dubai International Financial Centre Authority, covering health data processing and AI-assisted health intelligence services."},
+      {h:v.mono?"UAE DATA PROTECTION":"UAE Data Protection",b:"We comply fully with UAE Federal Decree-Law No. 45 of 2021 on Personal Data Protection (PDPL). All health data is treated as sensitive personal data with the highest protection standard."},
+      {h:v.mono?"DIFC DATA PROTECTION LAW":"DIFC Data Protection Law",b:"As a DIFC-registered entity, we additionally comply with DIFC Law No. 5 of 2020 (Data Protection Law)."},
+      {h:v.mono?"AI TRANSPARENCY":"AI Transparency",b:"Vitalis uses AI models (Gemini, Claude, GPT-4) for health data interpretation. All AI-generated insights are clearly labelled with confidence indicators. No AI system makes final clinical determinations."},
+      {h:v.mono?"CLINICAL OVERSIGHT":"Clinical Oversight",b:"Our platform operates under supervision of licensed medical professionals registered with the Dubai Health Authority (DHA). All clinical content is reviewed by our medical advisory board."},
+      {h:v.mono?"COMPLAINTS":"Complaints",b:"For regulatory concerns, contact compliance@vitalis.app or write to: Chief Compliance Officer · Vitalis · DIFC Innovation Hub · Dubai, UAE."},
+    ],
+  };
+  const secs=sections[type]||sections.privacy;
+  return(
+    <div style={{padding:mob?"0 20px 40px":"0 40px 60px",fontFamily:t.bf,color:t.text}}>
+      <div style={{maxWidth:680,margin:"0 auto",paddingTop:20}}>
+        <Lbl t={t}>{type.toUpperCase()}</Lbl>
+        <h1 style={{fontSize:t.hs*0.75,fontFamily:t.hf,fontWeight:t.hw,color:t.text,letterSpacing:"-0.02em",lineHeight:1.05,marginBottom:8}}>{titles[type]}</h1>
+        <div style={{fontSize:10,fontFamily:t.lf,letterSpacing:"0.14em",color:t.textT,textTransform:"uppercase",marginBottom:32}}>{v.mono?"LAST UPDATED: FEBRUARY 2026":"Last Updated: February 2026"}</div>
+        {secs.map((s,i)=>(
+          <div key={i} style={{marginBottom:26,paddingBottom:26,borderBottom:i<secs.length-1?`1px solid ${t.border}`:"none"}}>
+            <div style={{fontSize:14,fontWeight:500,color:t.text,marginBottom:10,fontFamily:"'Inter',sans-serif"}}>{s.h}</div>
+            <p style={{margin:0,fontSize:13,color:t.textS,lineHeight:1.8}}>{s.b}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   APP COMPONENTS (matching production vitalis.app)
+   ════════════════════════════════════════ */
+
+/* — Range Bar for Biomarkers — */
+function RangeBar({t,val,lo,hi,status}){
+  const pct=val&&lo&&hi?Math.max(0,Math.min(100,((val-lo)/(hi-lo))*100)):null;
+  const col=status==="optimal"||status==="normal"?t.green:status==="high"?t.red:t.yellow;
+  return <div style={{width:"100%",maxWidth:180,height:5,background:t.border,position:"relative"}}>
+    <div style={{position:"absolute",left:0,top:0,height:"100%",width:"100%",background:`linear-gradient(90deg,${t.border} 0%,${t.border} 100%)`}}/>
+    {pct!==null&&<div style={{position:"absolute",left:`${pct}%`,top:-3,width:8,height:11,background:col,marginLeft:-4}}/>}
+  </div>;
+}
+
+/* ─── DASHBOARD (matches vitalis.app/dashboard) ─── */
+function AppDashboard({t,mob}){
+  const uploads=[{n:"CBC march 19 lab.pdf",sz:"80.8 KB",d:"Feb 19, 2026",cat:"lab-report"},{n:"Scans from the doctor 10 April 2025.pdf",sz:"2.1 MB",d:"Feb 19, 2026",cat:"lab-report"},{n:"Jan2026 Supplements.pdf",sz:"45.6 KB",d:"Feb 19, 2026",cat:"lab-report"},{n:"Feb 2026 combined_compressed (1).pdf",sz:"25.0 MB",d:"Feb 19, 2026",cat:"lab-report"},{n:"lab 19.pdf",sz:"97.7 KB",d:"Feb 19, 2026",cat:"lab-report"}];
+  const recent=[{n:"HIV ASSAY: FINAL INTERPRETATION",cat:"Infectious Disease",v:"—",u:"N/A",s:"normal"},{n:"Albumin",cat:"Metabolic Panel",v:"42.6",u:"g/L",s:"optimal"},{n:"Progesterone",cat:"Hormones",v:"0.61",u:"nmol/L",s:"low"},{n:"Prolactin",cat:"Hormones",v:"374",u:"mIU/L",s:"optimal"},{n:"Cortisol, Total/AM",cat:"Hormones",v:"507",u:"nmol/L",s:"optimal"},{n:"Cortisol: DHEA-S Ratio",cat:"Hormones",v:"0.15",u:"ratio",s:"high"},{n:"PTH",cat:"General",v:"4.4",u:"pmol/L",s:"high"}];
+  const sc=s=>s==="optimal"||s==="normal"?t.green:s==="high"?t.red:t.yellow;const sl=s=>s==="optimal"?"Optimal":s==="normal"?"Normal":s==="high"?"High":"Low";const sb=s=>s==="optimal"||s==="normal"?t.greenSoft:s==="high"?t.redSoft:t.yellowSoft;
+  return(<div style={{animation:"fadeIn 0.4s"}}>
+    <h1 style={{fontSize:mob?t.hs*0.55:t.hs*0.7,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:4}}>Welcome back, Babar</h1>
+    <p style={{fontSize:13,color:t.textS,marginBottom:24}}>Your personal health intelligence dashboard</p>
+    <Card t={t} s={{marginBottom:14,padding:mob?"20px":"28px"}}>
+      <div style={{fontSize:13,fontWeight:600,color:t.text,marginBottom:6}}>Health Score</div>
+      <div style={{fontSize:36,fontFamily:t.nf,fontWeight:t.hw,color:t.textT,marginBottom:4}}>--</div>
+      <p style={{fontSize:12,color:t.textT,margin:0}}>Your health score will be calculated after your first lab report is analyzed.</p>
+    </Card>
+    <Lbl t={t}>Overview</Lbl>
+    <div style={{display:"grid",gridTemplateColumns:mob?"repeat(2,1fr)":"repeat(3,1fr)",gap:8,marginBottom:20}}>
+      {[{v:"7",l:"Uploads",i:"📄"},{v:"136",l:"Biomarkers",i:"🧪"},{v:"5",l:"Reports",i:"📊"}].map((s,i)=>(<Card key={i} t={t} s={{textAlign:"center",padding:"16px"}}><div style={{fontSize:20,marginBottom:4}}>{s.i}</div><div style={{fontSize:26,fontFamily:t.nf,fontWeight:t.hw,color:t.accent,lineHeight:1}}>{s.v}</div><div style={{fontSize:10,color:t.textT,marginTop:4}}>{s.l}</div></Card>))}
+    </div>
+    <Lbl t={t}>Recent Uploads</Lbl>
+    <Card t={t} s={{padding:0,marginBottom:20}}>
+      {uploads.map((u,i)=>(<div key={i} style={{padding:"10px 16px",borderBottom:i<uploads.length-1?`1px solid ${t.border}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:4}}>
+        <div><div style={{fontSize:12,fontWeight:500,color:t.text}}>{u.n}</div><div style={{fontSize:10,color:t.textT,fontFamily:t.lf}}>{u.sz} · {u.d}</div></div>
+        <Badge t={t} color={t.textS} bg={t.accentSoft}>{u.cat}</Badge>
+      </div>))}
+    </Card>
+    <Lbl t={t}>Recent Biomarkers</Lbl>
+    <Card t={t} s={{padding:0}}>
+      {recent.map((b,i)=>(<div key={i} style={{padding:"10px 16px",borderBottom:i<recent.length-1?`1px solid ${t.border}`:"none",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:4}}>
+        <div><div style={{fontSize:12,color:t.text}}>{b.n}</div><div style={{fontSize:10,color:t.textT,fontFamily:t.lf}}>{b.cat}</div></div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:12,fontFamily:t.nf,color:t.text}}>{b.v} {b.u}</span><Badge t={t} color={sc(b.s)} bg={sb(b.s)}>{sl(b.s)}</Badge></div>
+      </div>))}
+    </Card>
+  </div>);
+}
+
+/* ─── ATHENA LAB ANALYSIS (matches vitalis.app/analysis — 20-page report) ─── */
+function AppAthena({t,mob}){
+  const [exp,setExp]=useState({executive:true});
+  const secs=[
+    {k:"executive",t:"Executive Summary",s:"Welcome back for a deep dive into your latest health intelligence data. Your metabolic control, reflected in an outstanding HbA1c of 4.9% and excellent fasting glucose, is truly remarkable. Your inflammatory markers are exceptionally well-controlled, and your Vitamin D and homocysteine levels are pristine.\n\nHowever, we've identified a severely deficient Active B12 level of 0 pmol/L. Beyond this, we see clear signals of early renal strain, subtle but persistent metabolic shifts towards insulin resistance despite your excellent glucose control, and an adrenal axis showing signs of chronic stress. Your cardiovascular risk profile still presents areas for optimization due to elevated LDL and Non-HDL cholesterol.\n\nOur strategy will prioritize immediate repletion of your Active B12, stabilize emerging metabolic and renal challenges, then systematically build a comprehensive optimization plan aimed at fortifying your healthspan, cognitive durability, and metabolic resilience."},
+    {k:"metabolic",t:"Metabolic Health",s:"Your Fasting Glucose at 4.36 mmol/L and HbA1c at 4.9% are truly excellent, well within our longevity target of <5.1%. However, your HOMA2-%S (Insulin Sensitivity) is 69% (ref: 75–250%), falling below optimal. HOMA2-IR at 1.44 Index pushes the upper limit of longevity optimal (<1.0). Your HOMA2-%B (Beta Cell Function) is 165.3% (ref: 70–120%), elevated — your pancreas is working harder than ideal. TyG Index at 4.27 (longevity target <4.0) hints at early metabolic dysfunction. Leptin at 3 µg/L is excellent.\n\nYour outstanding glucose and HbA1c are masking a subtle but definite drift towards insulin resistance that requires proactive intervention."},
+    {k:"cardiovascular",t:"Cardiovascular and Lipid Architecture",s:"Triglycerides 0.74 mmol/L — excellent (longevity target <0.8). HDL 1.57 mmol/L — excellent (target >1.3). Lipoprotein(a) 10.9 nmol/L — exceptionally low, very favorable.\n\nHowever, Total Cholesterol 5.66 mmol/L is elevated. LDL 3.31 mmol/L is significantly above range (longevity target <1.8). Non-HDL 4.09 mmol/L also elevated (target <2.6). sdLDL-C 0.8 mmol/L within range but longevity target is <0.7. Cholesterol:HDL Ratio 3.61 (target <3.0). LDL:HDL Ratio 2.11 (target <1.5). Triglyceride:HDL Ratio 0.47 — excellent. AIP -0.33 — excellent.\n\nDespite excellent Lp(a) and triglycerides, elevated LDL and Non-HDL represent clear cardiovascular risk needing aggressive optimization."},
+    {k:"inflammation",t:"Inflammation and Immune Surveillance",s:"hs-CRP ~0.58 mg/L — exceptionally low (longevity target <1 mg/L). NLR 1.26 — fantastic (target <1.5). PLR 94.83 — excellent. WBC 7.09 within range but longevity aim is 5–6. Eosinophils % 3.95% slightly elevated (ref: 0–3%), suggesting mild allergic response. Ferritin 94.72 µg/L — ideal (longevity sweet spot 50–100)."},
+    {k:"hormonal",t:"Hormonal Axis",s:"Cortisol 507 nmol/L high-normal. Cortisol:DHEA-S Ratio 0.15 (ref: 0–0.09) — elevated, indicating chronic stress. DHEA-S 3.3 µmol/L on the lower end. Prolactin 374 mIU/L nearing upper limit.\n\nTSH 2.72 mIU/L within range but longevity optimal is 0.5–2.0. Free T3 4.11 pmol/L low-normal. Free T3:T4 Ratio 2.39 (target >2.6) — suboptimal T4→T3 conversion. No autoimmune thyroid involvement (TPO Ab 0).\n\nTestosterone 18.5 nmol/L mid-range. LH 13.2 IU/L elevated (ref: 1.5–9.3). Progesterone 0.61 nmol/L slightly below range. PTH 4.4 pmol/L elevated (ref: 0.5–2.9) — significant for bone health and calcium metabolism."},
+    {k:"renal",t:"Organ Function: Renal",s:"Creatinine 106 µmol/L within range but longevity target <88. eGFR 74 mL/min below longevity target of >90. Cystatin C 1.05 mg/L elevated — confirms early renal strain. Uric Acid 449.2 µmol/L above longevity target of <360 — independent risk factor for kidney disease. BUN 6.7 and BUN:Creatinine Ratio 0.06 both optimal.\n\nThe convergence of elevated Cystatin C, suboptimal eGFR, and high Uric Acid is a clear signal of early kidney stress requiring proactive intervention."},
+    {k:"hepatic",t:"Organ Function: Hepatic",s:"ALT 26 IU/L and AST 24.4 IU/L within range (longevity target <25 each). GGT 22 IU/L excellent (target <20). Albumin 42.6 g/L solid. Bilirubin 9 µmol/L excellent. ALP 45 IU/L excellent. Overall liver performing admirably with only minor nudges needed."},
+    {k:"nutrient",t:"Nutrient Intelligence",s:"Vitamin D 119 nmol/L perfectly within longevity target (100–150). Folate Serum 34.44 and RBC 2528.3 both robust. Iron 24.2 and Ferritin 94.72 ideal. Magnesium 0.9 mmol/L good.\n\nCRITICAL: Active B12 is 0 pmol/L (ref: 25.1–165) — severely deficient. Total B12 1248 pmol/L is elevated, suggesting functional deficiency where B12 isn't properly utilized. Homocysteine 6.4 µmol/L is excellent, but the Active B12 deficiency must be addressed urgently. Transferrin 1.85 g/L slightly low."},
+    {k:"hematology",t:"Hematology",s:"RBC 4.87, Hemoglobin 146, Hematocrit 0.46 — all well within optimal ranges. MCV 93.8 and MCH 30 excellent. MCHC 319 just slightly below ref (320–360), likely not clinically significant. WBC 7.09 within range. Neutrophils 48.24%, Lymphocytes 38.22% — excellent NLR 1.26. Eosinophils 3.95% slightly elevated. Platelets 257 healthy. PLR 94.83 excellent."},
+    {k:"hidden",t:"The Hidden Link: Stress-Thyroid-Metabolic Burden",s:"A cascading burden involving chronic stress, suboptimal thyroid function, and emerging insulin resistance. Cortisol:DHEA-S Ratio 0.15 indicates sustained adrenal stress. This chronic stress impairs T4→T3 conversion (Free T3 4.11, Ratio 2.39) and contributes to insulin resistance (HOMA2-%S 69%, HOMA2-IR 1.44).\n\nThis complex interplay forms a 'stress-thyroid-metabolic burden' that can perpetuate declining energy, metabolic resilience, and healthspan — often missed when reviewing systems in isolation."},
+  ];
+  const acts=[
+    {n:1,tag:"STABILIZE",t:"Aggressive Active B12 Repletion",d:"Initiate high-dose Vitamin B12 supplementation, preferably via intramuscular injections, to rapidly correct the critical deficiency of 0 pmol/L.",why:"Severe functional B12 deficiency poses immediate risks for neurological damage, fatigue, and impaired cellular function."},
+    {n:2,tag:"STABILIZE",t:"Dietary Optimization for Uric Acid & Kidney Support",d:"Minimize fructose, limit high-purine foods, ensure adequate hydration. Focus on plant-rich whole foods.",why:"Uric Acid 449.2 above longevity target contributes to early renal strain (Cystatin C: 1.05, eGFR: 74)."},
+    {n:3,tag:"STABILIZE",t:"Cardiovascular Risk Reduction — Phase I",d:"Increase soluble fiber (oats, barley, psyllium), include plant sterols/stanols, prioritize mono/polyunsaturated fats.",why:"Elevated LDL 3.31 and Non-HDL 4.09 contribute to increased cardiovascular risk."},
+    {n:4,tag:"DIAGNOSE",t:"Follow-up Active B12 and Methylation Status",d:"Re-test Active B12, Total B12, Folate 4–6 weeks after repletion. Order Methylmalonic Acid (MMA).",why:"Critical Active B12 deficiency despite high Total B12 requires confirmation of successful repletion."},
+    {n:5,tag:"DIAGNOSE",t:"Comprehensive Renal Assessment",d:"Schedule renal ultrasound to assess kidney structure and rule out abnormalities or kidney stones.",why:"Elevated Cystatin C, suboptimal eGFR, and high Uric Acid strongly suggest early kidney strain."},
+    {n:6,tag:"DIAGNOSE",t:"Adrenal Function Curve",d:"Obtain salivary or urine cortisol curve (4-point measurement) to characterize HPA axis function.",why:"Elevated Cortisol:DHEA-S Ratio 0.15 and high-normal morning Cortisol need dynamic assessment."},
+    {n:7,tag:"DIAGNOSE",t:"Investigate Low Progesterone and Elevated LH",d:"Consult endocrinologist for specialized hormone panels.",why:"Progesterone 0.61 and LH 13.2 outside optimal — possible primary gonadal issue."},
+    {n:8,tag:"OPTIMIZE",t:"Thyroid Conversion Enhancement",d:"Stress reduction, adequate sleep, targeted nutrient support (selenium, zinc, iodine) to support T4→T3.",why:"Free T3 4.11 and Ratio 2.39 indicate suboptimal thyroid conversion impacting metabolism and energy."},
+    {n:9,tag:"OPTIMIZE",t:"Insulin Sensitivity Protocol",d:"Resistance training, cardiovascular activity, time-restricted eating, consider CGM for real-time feedback.",why:"HOMA2-%S 69% and HOMA2-IR 1.44 indicate emerging insulin resistance despite excellent glucose."},
+    {n:10,tag:"OPTIMIZE",t:"Stress Resilience & Adrenal Support",d:"Daily meditation/breathwork, 7–9 hours sleep, explore adaptogenic herbs under medical guidance.",why:"Chronic stress impacts numerous systems — elevated Cortisol:DHEA-S and high-normal Prolactin."},
+  ];
+  const gaps=["ApoB — Stronger predictor of cardiovascular risk than LDL concentration alone.","Omega-3 Index — Critical for cardiovascular health, inflammation, brain function.","Reverse T3 (rT3) — Would clarify nature of thyroid conversion issue.","Urine Microalbumin:Creatinine Ratio — Early indicator of kidney damage.","Vitamin K2 — Essential for directing calcium to bones, not arteries."];
+  const tc=tag=>tag==="STABILIZE"?t.red:tag==="DIAGNOSE"?t.yellow:t.accent;
+  const tb=tag=>tag==="STABILIZE"?t.redSoft:tag==="DIAGNOSE"?t.yellowSoft:t.accentSoft;
+  return(<div style={{animation:"fadeIn 0.4s"}}>
+    <Lbl t={t}>Lab Analysis</Lbl>
+    <h1 style={{fontSize:mob?t.hs*0.55:t.hs*0.7,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:4}}>Lab Analysis Results</h1>
+    <p style={{fontSize:13,color:t.textS,marginBottom:20}}>136 biomarkers extracted and analyzed</p>
+    <Card t={t} s={{marginBottom:20,padding:0,overflow:"hidden"}}>
+      <div style={{padding:mob?"20px":"28px",display:"flex",gap:mob?16:28,alignItems:"flex-start",flexDirection:mob?"column":"row"}}>
+        <ScoreRing t={t} score={72} size={mob?100:130}/>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}}><Lbl t={t} s={{marginBottom:0}}>ATHENA HEALTH INTELLIGENCE</Lbl><Badge t={t} color={t.yellow} bg={t.yellowSoft}>Elevated Risk</Badge></div>
+          <p style={{fontSize:13,color:t.textS,lineHeight:1.85}}>Welcome back for a deep dive into your latest health intelligence data. Your metabolic control is truly remarkable. However, we've identified a <span style={{color:t.red,fontWeight:500}}>severely deficient Active B12 level of 0 pmol/L</span>, clear signals of early renal strain, and an adrenal axis showing signs of chronic stress.</p>
+        </div>
+      </div>
+      <div style={{margin:mob?"0 16px 20px":"0 28px 24px",padding:"14px 18px",background:t.redSoft}}>
+        <div style={{fontSize:13,fontWeight:600,color:t.red,marginBottom:4}}>⚠ Active B12 · 0 pmol/L</div>
+        <p style={{fontSize:12,color:t.textS,lineHeight:1.7,margin:0}}>Your Active B12 is critically low, indicating severe functional deficiency despite high total B12. Immediate intervention via intramuscular injection is required.</p>
+      </div>
+      <div style={{borderTop:`1px solid ${t.border}`}}>
+        {secs.map(s=>(<div key={s.k} style={{borderBottom:`1px solid ${t.border}`}}>
+          <button onClick={()=>setExp(e=>({...e,[s.k]:!e[s.k]}))} style={{width:"100%",display:"flex",justifyContent:"space-between",padding:mob?"12px 16px":"14px 28px",background:"transparent",border:"none",cursor:"pointer",textAlign:"left"}}>
+            <span style={{fontSize:mob?13:14,fontFamily:t.hf,fontWeight:600,color:t.text}}>{s.t}</span>
+            <span style={{color:t.textT,transform:exp[s.k]?"rotate(180deg)":"",transition:"transform 0.2s"}}>▾</span>
+          </button>
+          {exp[s.k]&&<div style={{padding:mob?"0 16px 14px":"0 28px 18px"}}>{s.s.split("\n\n").map((p,pi)=><p key={pi} style={{fontSize:12.5,color:t.textS,lineHeight:1.85,margin:pi>0?"12px 0 0":"0"}}>{p}</p>)}</div>}
+        </div>))}
+      </div>
+      <div style={{padding:mob?"16px":"24px 28px"}}>
+        <Lbl t={t}>Action Plan</Lbl>
+        {acts.map((a,i)=>(<div key={i} style={{marginBottom:8}}>
+          <div style={{display:"flex",gap:12,padding:"12px 16px",background:t.accentSoft,border:`1px solid ${t.border}`}}>
+            <div style={{flexShrink:0,textAlign:"center",minWidth:28}}><span style={{fontSize:16,fontFamily:t.nf,fontWeight:t.hw,color:t.text}}>{a.n}</span><Badge t={t} color={tc(a.tag)} bg={tb(a.tag)} s={{fontSize:7,padding:"2px 6px",display:"block",marginTop:3}}>{a.tag}</Badge></div>
+            <div><div style={{fontSize:12,fontWeight:600,color:t.text,marginBottom:4}}>[{a.tag}] {a.t}</div><p style={{fontSize:12,color:t.textS,lineHeight:1.7,margin:0}}>{a.d}</p></div>
+          </div>
+          <div style={{padding:"8px 16px 8px 56px",fontSize:11,color:t.textT,lineHeight:1.6,fontStyle:"italic"}}>{a.why}</div>
+        </div>))}
+      </div>
+      <div style={{padding:mob?"16px":"0 28px 24px"}}>
+        <Lbl t={t}>Data Gaps</Lbl>
+        {gaps.map((g,i)=>(<div key={i} style={{padding:"8px 0",borderBottom:i<gaps.length-1?`1px solid ${t.border}`:"none",fontSize:12,color:t.textS,lineHeight:1.7}}>{g}</div>))}
+      </div>
+    </Card>
+    <Lbl t={t}>Prescriptions</Lbl>
+    <Card t={t} s={{padding:0,marginBottom:14}}>
+      {[{n:"Concerta",d:"36 mg",tm:"AM · Empty stomach · daily"},{n:"Lamotrigine",d:"250 mg",tm:"PM · Lights out · daily"},{n:"Priadel",d:"800 mg",tm:"PM · Lights out · daily"},{n:"Promethazine",d:"50 mg",tm:"PM · Lights out · daily"},{n:"Quetiapine",d:"50 mg",tm:"PM · Lights out · daily"},{n:"Trazodone",d:"150 mg",tm:"PM · Lights out · daily"},{n:"Concerta",d:"18 mg",tm:"PRN"},{n:"Ritalin",d:"5 mg",tm:"PRN"},{n:"Clonazepam",d:"0.5 mg",tm:"PRN"},{n:"Propranolol",d:"40 mg",tm:"PRN"},{n:"Mounjaro",d:"5.0 mg",tm:"WEEKLY"}].map((m,i)=>(<div key={i} style={{padding:"10px 16px",borderBottom:`1px solid ${t.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:12,fontWeight:500,color:t.text}}>{m.n}</div><div style={{fontSize:10,color:t.textT,fontFamily:t.lf}}>{m.d}</div></div><span style={{fontSize:10,color:t.textT,fontFamily:t.lf}}>{m.tm}</span></div>))}
+    </Card>
+    <Lbl t={t}>Supplements</Lbl>
+    <Card t={t} s={{padding:0}}>
+      {[{n:"NMN",tm:"AM · Empty stomach"},{n:"Liposomal Vitamin C",tm:"AM · Empty stomach"},{n:"Mitopure",tm:"AM · With beetroot juice"},{n:"Only Trace Minerals",tm:"AM · With beetroot juice"},{n:"Glucosamine & Chondroitin",tm:"AM · With beetroot juice"},{n:"Omega-3 Ultra (x2)",tm:"AM · With beetroot juice"},{n:"Plant Sterol Cholesterol Support",tm:"AM · With beetroot juice"},{n:"Ispaghula Husk",tm:"AM · Empty stomach"},{n:"Clean Lean Protein",tm:"AM/PM · Post Workout"},{n:"Chia Seeds",tm:"AM/PM · With Nuzest"},{n:"PS 100",tm:"PM · Before bed"},{n:"Probiotic & Antioxidant",tm:"PM · Before bed"},{n:"Inositol Capsules",tm:"PM · Before bed"},{n:"Magnesium Citrate",tm:"PM · Before bed"},{n:"Liposomal Glutathione",tm:"PM · Before bed"},{n:"Glycine",tm:"PM · Before bed"},{n:"Magnesium Glycinate",tm:"PM · Before bed"}].map((s,i)=>(<div key={i} style={{padding:"8px 16px",borderBottom:`1px solid ${t.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,color:t.text}}>{s.n}</span><span style={{fontSize:10,color:t.textT,fontFamily:t.lf}}>{s.tm}</span></div>))}
+    </Card>
+  </div>);
+}
+
+/* ─── BIOMARKERS (matches vitalis.app/biomarkers) ─── */
+function AppBiomarkers({t,mob}){
+  const [fCat,setFCat]=useState("all");const [fSt,setFSt]=useState("all");
+  const all=[
+    {n:"Cholesterol, Total",cat:"Lipid Panel",v:5.66,u:"mmol/L",lo:3.23,hi:5.15,s:"high",d:"Jul 22, 2025"},
+    {n:"LDL Cholesterol",cat:"Lipid Panel",v:3.31,u:"mmol/L",lo:0,hi:2.59,s:"high",d:"Jul 22, 2025"},
+    {n:"HDL Cholesterol",cat:"Lipid Panel",v:1.57,u:"mmol/L",lo:1.16,hi:2.59,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Non-HDL Cholesterol",cat:"Lipid Panel",v:4.09,u:"mmol/L",lo:0,hi:3.37,s:"high",d:"Jul 22, 2025"},
+    {n:"Triglycerides",cat:"Lipid Panel",v:0.74,u:"mmol/L",lo:0,hi:1.69,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Lipoprotein (a)",cat:"Lipid Panel",v:10.9,u:"nmol/L",lo:0,hi:74.99,s:"optimal",d:"Jul 22, 2025"},
+    {n:"sdLDL-C",cat:"Lipid Panel",v:0.8,u:"mmol/L",lo:0,hi:1.3,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Cystatin C",cat:"Kidney",v:1.05,u:"mg/L",lo:0.5,hi:1,s:"high",d:"Jul 22, 2025"},
+    {n:"eGFR",cat:"Kidney",v:74,u:"mL/min",lo:60,hi:160,s:"optimal",d:"Jul 22, 2025"},
+    {n:"BUN",cat:"Kidney",v:6.7,u:"mmol/L",lo:2.5,hi:8.92,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Creatinine",cat:"Kidney",v:106,u:"µmol/L",lo:35.36,hi:132.6,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Uric Acid",cat:"Kidney",v:449.2,u:"µmol/L",lo:205.21,hi:475.84,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Active B12",cat:"Vitamins",v:0,u:"pmol/L",lo:25.1,hi:165,s:"low",d:"Jul 22, 2025"},
+    {n:"Vitamin B12",cat:"Vitamins",v:1248,u:"pmol/L",lo:147.56,hi:811.58,s:"high",d:"Jul 22, 2025"},
+    {n:"25-OH Vitamin D",cat:"Vitamins",v:119,u:"nmol/L",lo:74.88,hi:249.6,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Folate, Serum",cat:"Vitamins",v:34.44,u:"nmol/L",lo:12.46,hi:61.18,s:"optimal",d:"Jul 22, 2025"},
+    {n:"ALT",cat:"Liver",v:26,u:"IU/L",lo:6,hi:29,s:"optimal",d:"Jul 22, 2025"},
+    {n:"AST",cat:"Liver",v:24.4,u:"IU/L",lo:10,hi:35,s:"optimal",d:"Jul 22, 2025"},
+    {n:"GGT",cat:"Liver",v:22,u:"IU/L",lo:3,hi:85,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Bilirubin, Total",cat:"Liver",v:9,u:"µmol/L",lo:3.42,hi:20.52,s:"optimal",d:"Jul 22, 2025"},
+    {n:"TSH",cat:"Thyroid",v:2.72,u:"mIU/L",lo:0.4,hi:4.5,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Free T4",cat:"Thyroid",v:14.4,u:"pmol/L",lo:10.3,hi:23.17,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Free T3",cat:"Thyroid",v:4.11,u:"pmol/L",lo:3.53,hi:6.45,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Glucose (Fasting)",cat:"Metabolic",v:4.36,u:"mmol/L",lo:3.61,hi:5.5,s:"optimal",d:"Jul 22, 2025"},
+    {n:"HbA1c",cat:"Diabetes",v:4.9,u:"%",lo:0,hi:5.7,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Insulin (Fasting)",cat:"Diabetes",v:24.2,u:"pmol/L",lo:0,hi:127.78,s:"optimal",d:"Jul 22, 2025"},
+    {n:"HOMA2-%S",cat:"General",v:69,u:"%",lo:75,hi:250,s:"low",d:"Jul 22, 2025"},
+    {n:"HOMA2-%B",cat:"General",v:165.3,u:"%",lo:70,hi:120,s:"high",d:"Jul 22, 2025"},
+    {n:"LH",cat:"Hormones",v:13.2,u:"IU/L",lo:1.5,hi:9.3,s:"high",d:"Jul 22, 2025"},
+    {n:"Progesterone",cat:"Hormones",v:0.61,u:"nmol/L",lo:0.64,hi:4.13,s:"low",d:"Jul 22, 2025"},
+    {n:"Cortisol: DHEA-S Ratio",cat:"Hormones",v:0.15,u:"ratio",lo:0,hi:0.09,s:"high",d:"Jul 22, 2025"},
+    {n:"PTH",cat:"General",v:4.4,u:"pmol/L",lo:0.5,hi:2.9,s:"high",d:"Jul 22, 2025"},
+    {n:"Transferrin",cat:"Iron Studies",v:1.85,u:"g/L",lo:2,hi:3.9,s:"low",d:"Jul 22, 2025"},
+    {n:"Ferritin",cat:"Iron Studies",v:94.72,u:"µg/L",lo:16,hi:232,s:"optimal",d:"Jul 22, 2025"},
+    {n:"hs-CRP",cat:"Inflammatory",v:5.52,u:"nmol/L",lo:0,hi:9.52,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Homocysteine",cat:"Inflammatory",v:6.4,u:"µmol/L",lo:0,hi:10.3,s:"optimal",d:"Jul 22, 2025"},
+    {n:"PSA, Total",cat:"Reproductive",v:0.99,u:"µg/L",lo:0,hi:4,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Testosterone, Total",cat:"Hormones",v:18.5,u:"nmol/L",lo:8.67,hi:38.14,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Hemoglobin",cat:"CBC",v:146,u:"g/L",lo:132,hi:171,s:"optimal",d:"Jul 22, 2025"},
+    {n:"RBC",cat:"CBC",v:4.87,u:"x10^12/L",lo:4.2,hi:5.8,s:"optimal",d:"Jul 22, 2025"},
+    {n:"Eosinophils %",cat:"General",v:3.95,u:"%",lo:0,hi:3,s:"high",d:"Jul 22, 2025"},
+    {n:"MCHC",cat:"CBC",v:319,u:"g/L",lo:320,hi:360,s:"low",d:"Jul 22, 2025"},
+  ];
+  const cats=[...new Set(all.map(m=>m.cat))];
+  const filtered=all.filter(m=>(fCat==="all"||m.cat===fCat)&&(fSt==="all"||m.s===fSt));
+  const sc=s=>s==="optimal"||s==="normal"?t.green:s==="high"?t.red:t.yellow;
+  const sb=s=>s==="optimal"||s==="normal"?t.greenSoft:s==="high"?t.redSoft:t.yellowSoft;
+  const sl=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const sel={padding:"6px 10px",background:t.card,border:`1px solid ${t.border}`,color:t.text,fontSize:11,fontFamily:t.lf};
+  return(<div style={{animation:"fadeIn 0.4s"}}>
+    <Lbl t={t}>Biomarker Dashboard</Lbl>
+    <h1 style={{fontSize:mob?t.hs*0.5:t.hs*0.65,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:4}}>Track and monitor your health biomarkers</h1>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,margin:"16px 0"}}>{[{v:"136",l:"Total Biomarkers",c:t.text},{v:"105",l:"Optimal",c:t.green},{v:"18",l:"Out of Range",c:t.red}].map((s,i)=>(<Card key={i} t={t} s={{textAlign:"center",padding:mob?"14px":"18px"}}><div style={{fontSize:mob?22:28,fontFamily:t.nf,fontWeight:t.hw,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:t.textT,marginTop:3}}>{s.l}</div></Card>))}</div>
+    <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+      <select value={fCat} onChange={e=>setFCat(e.target.value)} style={sel}><option value="all">All Categories</option>{cats.map(c=><option key={c} value={c}>{c}</option>)}</select>
+      <select value={fSt} onChange={e=>setFSt(e.target.value)} style={sel}><option value="all">All Statuses</option><option value="optimal">Optimal</option><option value="high">High</option><option value="low">Low</option></select>
+    </div>
+    <p style={{fontSize:11,color:t.textT,marginBottom:10}}>Showing {filtered.length} of 136 biomarkers</p>
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {filtered.map((m,i)=>(<Card key={i} t={t} s={{padding:"12px 16px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,flexWrap:"wrap",gap:4}}>
+          <div><div style={{fontSize:12,fontWeight:500,color:t.text}}>{m.n}</div><div style={{fontSize:10,color:t.textT,fontFamily:t.lf}}>{m.cat}</div></div>
+          <Badge t={t} color={sc(m.s)} bg={sb(m.s)}>{sl(m.s)}</Badge>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+          <span style={{fontSize:14,fontFamily:t.nf,fontWeight:t.hw,color:t.text}}>{m.v||"—"} <span style={{fontSize:10,color:t.textT}}>{m.u}</span></span>
+          <RangeBar t={t} val={m.v} lo={m.lo} hi={m.hi} status={m.s}/>
+        </div>
+        <div style={{fontSize:9,color:t.textT,fontFamily:t.lf,marginTop:4}}>Ref: {m.lo}–{m.hi} {m.u} · Tested {m.d}</div>
+      </Card>))}
+    </div>
+  </div>);
+}
+
+/* ─── UPLOAD HUB (matches vitalis.app/upload) ─── */
+function AppUpload({t,mob}){
+  const files=[{n:"CBC march 19 lab.pdf",cat:"Lab Report",st:"Analyzed"},{n:"Scans from the doctor 10 Ap…",cat:"Lab Report",st:"Analyzed"},{n:"Jan2026 Supplements.pdf",cat:"Lab Report",st:"Uploaded"},{n:"Feb 2026 combined_compr…",cat:"Lab Report",st:"Uploaded"},{n:"lab 19.pdf",cat:"Lab Report",st:"Analyzed"},{n:"Lipid Profil Jan 2025.pdf",cat:"Lab Report",st:"Analyzed"},{n:"BabarLakhani-OptimalDX-P…",cat:"Lab Report",st:"Analyzed"}];
+  return(<div style={{animation:"fadeIn 0.4s"}}>
+    <Lbl t={t}>Upload Hub</Lbl>
+    <h1 style={{fontSize:mob?t.hs*0.5:t.hs*0.65,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:4}}>Upload and manage your health documents</h1>
+    <Card t={t} s={{padding:"40px 30px",textAlign:"center",border:`2px dashed ${t.border}`,margin:"20px 0"}}>
+      <div style={{fontSize:28,marginBottom:8}}>☁</div>
+      <div style={{fontSize:14,color:t.textS,marginBottom:4}}>Drag & drop files here, or click to browse</div>
+      <div style={{fontSize:12,color:t.textT}}>PDF, images, CSV, or text files</div>
+    </Card>
+    <Card t={t} s={{padding:0,overflow:"hidden"}}>
+      {!mob&&<div style={{display:"grid",gridTemplateColumns:"60px 1fr 100px 80px 80px",padding:"10px 16px",borderBottom:`1px solid ${t.border}`,background:t.accentSoft}}>
+        <span style={{fontSize:10,fontWeight:600,color:t.textT,fontFamily:t.lf}}>Type</span>
+        <span style={{fontSize:10,fontWeight:600,color:t.textT,fontFamily:t.lf}}>Filename</span>
+        <span style={{fontSize:10,fontWeight:600,color:t.textT,fontFamily:t.lf}}>Category</span>
+        <span style={{fontSize:10,fontWeight:600,color:t.textT,fontFamily:t.lf}}>Status</span>
+        <span style={{fontSize:10,fontWeight:600,color:t.textT,fontFamily:t.lf}}>Actions</span>
+      </div>}
+      {files.map((f,i)=>(mob?
+        <div key={i} style={{padding:"12px 16px",borderBottom:`1px solid ${t.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+          <div><Badge t={t} color={t.red} bg={t.redSoft} s={{marginRight:8}}>PDF</Badge><span style={{fontSize:12,color:t.text}}>{f.n}</span><div style={{fontSize:10,color:t.textT,marginTop:2}}>{f.cat}</div></div>
+          <Badge t={t} color={f.st==="Analyzed"?t.green:t.textT} bg={f.st==="Analyzed"?t.greenSoft:t.accentSoft}>{f.st}</Badge>
+        </div>
+        :<div key={i} style={{display:"grid",gridTemplateColumns:"60px 1fr 100px 80px 80px",padding:"12px 16px",borderBottom:`1px solid ${t.border}`,alignItems:"center"}}>
+          <Badge t={t} color={t.red} bg={t.redSoft}>PDF</Badge>
+          <span style={{fontSize:12,color:t.text}}>{f.n}</span>
+          <span style={{fontSize:11,color:t.textS}}>{f.cat}</span>
+          <Badge t={t} color={f.st==="Analyzed"?t.green:t.textT} bg={f.st==="Analyzed"?t.greenSoft:t.accentSoft}>{f.st}</Badge>
+          {f.st==="Analyzed"&&<span style={{fontSize:11,color:t.green,fontFamily:t.lf}}>Analyzed</span>}
+        </div>
+      ))}
+    </Card>
+  </div>);
+}
+
+/* ─── VERIFY MEDS (matches production — full prescription + supplement list) ─── */
+function AppVerifyMeds({t,mob}){
+  const meds=[{ty:"Rx",n:"Concerta",d:"36 mg",tm:"AM · daily"},{ty:"Rx",n:"Lamotrigine",d:"250 mg",tm:"PM · daily"},{ty:"Rx",n:"Priadel",d:"800 mg",tm:"PM · daily"},{ty:"Rx",n:"Promethazine",d:"50 mg",tm:"PM · daily"},{ty:"Rx",n:"Quetiapine",d:"50 mg",tm:"PM · daily"},{ty:"Rx",n:"Trazodone",d:"150 mg",tm:"PM · daily"},{ty:"Rx",n:"Concerta",d:"18 mg",tm:"PRN"},{ty:"Rx",n:"Ritalin",d:"5 mg",tm:"PRN"},{ty:"Rx",n:"Clonazepam",d:"0.5 mg",tm:"PRN"},{ty:"Rx",n:"Propranolol",d:"40 mg",tm:"PRN"},{ty:"Rx",n:"Mounjaro",d:"5.0 mg",tm:"WEEKLY"}];
+  const supps=[{ty:"Supp",n:"NMN",d:"—",tm:"AM"},{ty:"Supp",n:"Liposomal Vitamin C",d:"—",tm:"AM"},{ty:"Supp",n:"Mitopure",d:"—",tm:"AM"},{ty:"Supp",n:"Omega-3 Ultra (x2)",d:"—",tm:"AM"},{ty:"Supp",n:"Plant Sterol",d:"—",tm:"AM"},{ty:"Supp",n:"Ispaghula Husk",d:"— UNKNOWN",tm:"AM"},{ty:"Supp",n:"Mag Glycinate",d:"400mg",tm:"PM"},{ty:"Supp",n:"Mag Citrate",d:"—",tm:"PM"},{ty:"Supp",n:"Liposomal Glutathione",d:"—",tm:"PM"},{ty:"Supp",n:"Glycine",d:"—",tm:"PM"},{ty:"Supp",n:"PS 100",d:"—",tm:"PM"},{ty:"Supp",n:"Inositol",d:"—",tm:"PM"},{ty:"Supp",n:"Probiotic & Antioxidant",d:"—",tm:"PM"}];
+  const hasErr=supps.some(s=>s.d.includes("UNKNOWN"));
+  return(<div style={{animation:"fadeIn 0.4s"}}>
+    <Lbl t={t}>Verify & Correct</Lbl>
+    <h1 style={{fontSize:mob?t.hs*0.5:t.hs*0.65,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:8}}>Medications & Supplements</h1>
+    {hasErr&&<Card t={t} s={{padding:"10px 16px",marginBottom:10,background:t.redSoft}}>⚠ <span style={{fontSize:12,color:t.red,fontWeight:500}}>1 item has UNKNOWN_UNIT — review required</span></Card>}
+    <Lbl t={t}>Prescriptions ({meds.length})</Lbl>
+    <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:16}}>{meds.map((m,i)=>(<Card key={i} t={t} s={{padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:12,fontWeight:500,color:t.text}}>{m.n}</div><div style={{fontSize:10,color:t.textT,fontFamily:t.lf}}>{m.d}</div></div><div style={{display:"flex",gap:6}}><Badge t={t} color={t.accent} bg={t.accentSoft}>Rx</Badge><Badge t={t} color={t.textS} bg={t.accentSoft}>{m.tm}</Badge></div></Card>))}</div>
+    <Lbl t={t}>Supplements ({supps.length})</Lbl>
+    <div style={{display:"flex",flexDirection:"column",gap:4}}>{supps.map((m,i)=>{const isErr=m.d.includes("UNKNOWN");return(<Card key={i} t={t} s={{padding:"10px 16px",background:isErr?t.redSoft:"",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:12,fontWeight:500,color:t.text}}>{m.n}</div><div style={{fontSize:10,color:isErr?t.red:t.textT,fontFamily:t.lf}}>{m.d}</div></div><div style={{display:"flex",gap:6}}><Badge t={t} color={t.green} bg={t.greenSoft}>Supp</Badge><Badge t={t} color={t.textS} bg={t.accentSoft}>{m.tm}</Badge></div></Card>);})}</div>
+    <div style={{display:"flex",gap:8,marginTop:14,flexWrap:"wrap"}}><Btn t={t} v={V.AAPL} primary>✓ Confirm All</Btn><Btn t={t} v={V.AAPL}>+ Add Item</Btn><Btn t={t} v={V.AAPL}>↻ Re-upload</Btn></div>
+  </div>);
+}
+
+/* ─── VERIFY GENETICS (unchanged — production doesn't have this page yet) ─── */
+function AppVerifyGenetics({t,mob}){
+  const genes=[{d:"Kidney Cancer",p:96,lv:"high"},{d:"Hypercholesterolemia",p:97,lv:"high"},{d:"Prostate Cancer",p:79,lv:"elevated"},{d:"Hypertension",p:77,lv:"not_elevated"},{d:"Type 2 Diabetes",p:50,lv:"average"},{d:"CAD",p:40,lv:"below"}];
+  const lc=l=>l==="high"?t.red:l==="elevated"?t.yellow:t.green;const lb=l=>l==="high"?t.redSoft:l==="elevated"?t.yellowSoft:t.greenSoft;const ll=l=>l==="high"?"HIGH":l==="elevated"?"ELEVATED":"OK";
+  return(<div style={{animation:"fadeIn 0.4s"}}><Lbl t={t}>Verify & Correct</Lbl><h1 style={{fontSize:mob?t.hs*0.5:t.hs*0.65,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:8}}>Genetic Risk Scores</h1><Card t={t} s={{padding:"10px 16px",marginBottom:10,background:t.accentSoft}}>🧬 <span style={{fontSize:12,color:t.text}}>6 conditions extracted</span></Card><div style={{display:"flex",flexDirection:"column",gap:6}}>{genes.map((g,i)=>(<Card key={i} t={t} s={{padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{flex:1}}><div style={{fontSize:12,fontWeight:500,color:t.text,marginBottom:4}}>{g.d}</div><div style={{width:"100%",maxWidth:120,height:5,background:t.border,position:"relative"}}><div style={{position:"absolute",left:0,top:0,height:"100%",width:`${g.p}%`,background:g.p>=90?t.red:g.p>=70?t.yellow:t.green}}/></div></div><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14,fontFamily:t.nf,color:t.text}}>{g.p}<span style={{fontSize:9,color:t.textT}}>th</span></span><Badge t={t} color={lc(g.lv)} bg={lb(g.lv)}>{ll(g.lv)}</Badge></div></Card>))}</div><div style={{display:"flex",gap:8,marginTop:14}}><Btn t={t} v={V.AAPL} primary>✓ Confirm</Btn><Btn t={t} v={V.AAPL}>+ Add</Btn></div></div>);
+}
+
+/* ─── DATA STREAMS (unchanged) ─── */
+function AppDataStreams({t,mob}){
+  const streams=[{n:"Bloodwork",i:"🧪",ok:true,d:"Feb 19",it:"136 markers"},{n:"Medications",i:"💊",ok:true,d:"Feb 12",it:"30 items"},{n:"Genetics",i:"🧬",ok:true,d:"Jun 2025",it:"9 conditions"},{n:"Wearables",i:"⌚",ok:false}];
+  return(<div style={{animation:"fadeIn 0.4s"}}><Lbl t={t}>Data Streams</Lbl><h1 style={{fontSize:mob?t.hs*0.5:t.hs*0.65,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:20}}>Athena Report Header</h1><div style={{display:"grid",gridTemplateColumns:mob?"1fr 1fr":"repeat(4,1fr)",gap:8}}>{streams.map((s,i)=>(<Card key={i} t={t} s={{padding:"16px",borderColor:s.ok?`${t.green}33`:t.border}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:22}}>{s.i}</span><span style={{fontSize:16}}>{s.ok?"✅":"❌"}</span></div><div style={{fontSize:12,fontWeight:500,color:t.text,marginBottom:2}}>{s.n}</div>{s.ok?<div><div style={{fontSize:10,color:t.green,fontFamily:t.lf}}>{s.it}</div><div style={{fontSize:9,color:t.textT,fontFamily:t.lf}}>{s.d}</div></div>:<div style={{fontSize:10,color:t.textT}}>Not available</div>}</Card>))}</div></div>);
+}
+
+/* ─── GOD MODE COLLISIONS (unchanged) ─── */
+function AppCollisions({t,mob}){
+  const cols=[{id:1,t:"Hypercholesterolemia Headwind",sev:"critical",ins:"97th% genetics driving elevated LDL. Plant Sterol insufficient. Discuss ApoB suppression.",tags:["GENETICS: 97th%","LDL 3.31 HIGH","Plant Sterol"]},{id:2,t:"Kidney Vulnerability",sev:"warning",ins:"96th% kidney risk + Cystatin C elevated. Protein stack adding nitrogen load.",tags:["GENETICS: 96th%","Cystatin C 1.05","Protein stack"]},{id:3,t:"Prostate Surveillance",sev:"monitor",ins:"PSA 0.99 excellent but 79th% risk — track velocity every 6 months.",tags:["GENETICS: 79th%","PSA 0.99"]},{id:4,t:"Mounjaro Friction",sev:"warning",ins:"Mounjaro delays gastric emptying — friction for PM medication stack.",tags:["Mounjaro WEEKLY","PM stack x5"]},{id:5,t:"Insulin Paradox",sev:"monitor",ins:"Average T2D genetics but HOMA2-%S 69% low. Mounjaro addressing it.",tags:["T2D 50th%","HOMA2-%S 69%","Mounjaro"]}];
+  const sc=s=>s==="critical"?t.red:s==="warning"?t.yellow:t.accent;const sb=s=>s==="critical"?t.redSoft:s==="warning"?t.yellowSoft:t.accentSoft;
+  return(<div style={{animation:"fadeIn 0.4s"}}><Lbl t={t}>God Mode</Lbl><h1 style={{fontSize:mob?t.hs*0.5:t.hs*0.65,fontFamily:t.hf,fontWeight:t.hw,color:t.text,marginBottom:20}}>Cross-System Collisions</h1>{cols.map(c=>(<Card key={c.id} t={t} s={{marginBottom:10,padding:0,borderLeft:`3px solid ${sc(c.sev)}`}}><div style={{padding:mob?"14px 16px":"18px 22px"}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,flexWrap:"wrap"}}><span style={{fontSize:20,fontFamily:t.nf,fontWeight:t.hw,color:sc(c.sev)}}>{c.id}</span><span style={{fontSize:mob?13:14,fontWeight:600,color:t.text}}>{c.t}</span><Badge t={t} color={sc(c.sev)} bg={sb(c.sev)}>{c.sev}</Badge></div><div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:10}}>{c.tags.map((tg,i)=>(<span key={i} style={{padding:"4px 8px",background:t.accentSoft,border:`1px solid ${t.border}`,fontSize:mob?9:10,color:t.textS}}>{tg}</span>))}</div><div style={{padding:"10px 12px",background:sb(c.sev)}}><div style={{fontSize:8,fontFamily:t.lf,letterSpacing:"0.2em",color:sc(c.sev),marginBottom:3}}>ATHENA INSIGHT</div><p style={{fontSize:12,color:t.textS,lineHeight:1.8,margin:0}}>{c.ins}</p></div></div></Card>))}</div>);
+}
+
+/* ════════════════════════════════════════
+   CONTROLS — DESKTOP (compact ~280px + App Components row)
+   ════════════════════════════════════════ */
+function DesktopControls({lens,setLens,theme,setTheme,page,setPage,onClose}){
+  return(
+    <div style={{position:"fixed",top:58,right:0,zIndex:300,background:"rgba(0,0,0,0.97)",border:"1px solid #222",borderTop:"none",padding:"16px 16px",minWidth:280}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+        <span style={{fontSize:9,fontFamily:"monospace",color:"#666",letterSpacing:"0.2em",textTransform:"uppercase"}}>Design Controls</span>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#666",fontSize:14,cursor:"pointer",padding:0,lineHeight:1}}>✕</button>
+      </div>
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:8,fontFamily:"monospace",color:"#444",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:8}}>Lens</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {LENSES.map(l=><button key={l} onClick={()=>setLens(l)} style={{padding:"3px 8px",background:lens===l?LENS_COLORS[l]:"transparent",border:`1px solid ${lens===l?LENS_COLORS[l]:"#333"}`,borderRadius:0,color:lens===l?"#fff":"#666",fontSize:8,fontFamily:"monospace",cursor:"pointer",textTransform:"uppercase"}}>{l}</button>)}
+        </div>
+      </div>
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:8,fontFamily:"monospace",color:"#444",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:8}}>Theme</div>
+        <div style={{display:"flex",gap:4}}>
+          {THEME_LIST.map(th=><button key={th} onClick={()=>setTheme(th)} style={{padding:"3px 12px",background:theme===th?THEME_COLORS[th]:"transparent",border:`1px solid ${theme===th?THEME_COLORS[th]:"#333"}`,borderRadius:0,color:theme===th?"#fff":"#666",fontSize:8,fontFamily:"monospace",cursor:"pointer",textTransform:"uppercase"}}>{th}</button>)}
+        </div>
+      </div>
+      <div style={{marginBottom:12}}>
+        <div style={{fontSize:8,fontFamily:"monospace",color:"#444",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:8}}>Page</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {SITE_PAGES.map(p=><button key={p} onClick={()=>{setPage(p);onClose();}} style={{padding:"3px 8px",background:page===p?"#2a2a2a":"transparent",border:`1px solid ${page===p?"#555":"#333"}`,borderRadius:0,color:page===p?"#fff":"#666",fontSize:8,fontFamily:"monospace",cursor:"pointer",textTransform:"uppercase"}}>{p}</button>)}
+        </div>
+      </div>
+      <div>
+        <div style={{fontSize:8,fontFamily:"monospace",color:"#444",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:8}}>App Components</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {APP_PAGES.map(p=><button key={p} onClick={()=>{setPage(p);onClose();}} style={{padding:"3px 8px",background:page===p?"#3366FF":"transparent",border:`1px solid ${page===p?"#3366FF":"#333"}`,borderRadius:0,color:page===p?"#fff":"#666",fontSize:8,fontFamily:"monospace",cursor:"pointer",textTransform:"uppercase"}}>{ALL_LABELS[p]}</button>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   CONTROLS — MOBILE BOTTOM SHEET
+   ════════════════════════════════════════ */
+function MobileSheet({lens,setLens,theme,setTheme,page,setPage,onClose,accent}){
+  const [tab,setTab]=useState("page");
+  const tabs=[{k:"page",l:"📄 Pages"},{k:"lens",l:"🔍 Lens"},{k:"theme",l:"🎨 Theme"}];
+  const pill=(active,color,label,onClick)=>(
+    <button onClick={onClick} style={{
+      padding:"12px 18px",fontSize:13,fontFamily:"'Inter',sans-serif",fontWeight:active?600:400,
+      background:active?(color||"#3366FF"):"rgba(255,255,255,0.06)",
+      border:`1.5px solid ${active?(color||"#3366FF"):"rgba(255,255,255,0.12)"}`,
+      color:active?"#fff":"#aaa",cursor:"pointer",borderRadius:0,minHeight:44,
+    }}>{label}</button>
+  );
+  return(<>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:400,animation:"overlayIn 0.2s"}}/>
+    <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,background:"#111",borderTop:"2px solid #333",maxHeight:"80vh",overflowY:"auto",animation:"sheetUp 0.3s ease",paddingBottom:"env(safe-area-inset-bottom, 20px)"}}>
+      <div style={{textAlign:"center",padding:"12px 0 8px"}}><div style={{width:40,height:4,background:"#444",borderRadius:2,margin:"0 auto"}}/></div>
+      <div style={{display:"flex",borderBottom:"1px solid #333",padding:"0 16px",gap:0}}>
+        {tabs.map(tb=>(
+          <button key={tb.k} onClick={()=>setTab(tb.k)} style={{
+            flex:1,padding:"14px 8px",background:"transparent",border:"none",borderBottom:tab===tb.k?"2px solid #3366FF":"2px solid transparent",
+            color:tab===tb.k?"#fff":"#888",fontSize:13,fontFamily:"'Inter',sans-serif",fontWeight:tab===tb.k?600:400,cursor:"pointer",
+          }}>{tb.l}</button>
+        ))}
+      </div>
+      <div style={{padding:"16px 16px 24px"}}>
+        {tab==="page"&&<div>
+          <div style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#666",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:10}}>Marketing Site</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginBottom:20}}>
+            {SITE_PAGES.map(p=>pill(page===p,null,ALL_LABELS[p],()=>{setPage(p);onClose();}))}
+          </div>
+          <div style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#666",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:10}}>App Components</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6}}>
+            {APP_PAGES.map(p=>pill(page===p,"#3366FF",ALL_LABELS[p],()=>{setPage(p);onClose();}))}
+          </div>
+        </div>}
+        {tab==="lens"&&<div>
+          <div style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#666",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:10}}>Choose Voice & Style</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+            {LENSES.map(l=>pill(lens===l,LENS_COLORS[l],l,()=>{setLens(l);}))}
+          </div>
+          <div style={{marginTop:16,padding:"12px",background:"rgba(255,255,255,0.04)",border:"1px solid #333"}}>
+            <div style={{fontSize:10,color:"#888",marginBottom:4}}>Active: <span style={{color:LENS_COLORS[lens],fontWeight:600}}>{lens}</span></div>
+            <div style={{fontSize:11,color:"#666"}}>Changes headline copy, tone, and layout across all marketing pages.</div>
+          </div>
+        </div>}
+        {tab==="theme"&&<div>
+          <div style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:"#666",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:10}}>Visual Theme</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {THEME_LIST.map(th=>(
+              <button key={th} onClick={()=>{setTheme(th);}} style={{
+                display:"flex",alignItems:"center",gap:14,padding:"16px",
+                background:theme===th?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.02)",
+                border:`2px solid ${theme===th?THEME_COLORS[th]:"#333"}`,cursor:"pointer",minHeight:56,
+              }}>
+                <div style={{width:24,height:24,background:th==="limestone"?"#F5F0EB":th==="cyber"?"#08080D":"linear-gradient(135deg,#0a0a14,#080d18)",border:"1px solid #444",flexShrink:0}}/>
+                <div style={{textAlign:"left"}}>
+                  <div style={{fontSize:14,fontWeight:theme===th?600:400,color:theme===th?"#fff":"#aaa",textTransform:"capitalize"}}>{th}</div>
+                  <div style={{fontSize:11,color:"#666"}}>{th==="limestone"?"Light · Warm · Serif headings":th==="cyber"?"Dark · Monospace · Tech-forward":"Dark · Glass · Blur effects"}</div>
+                </div>
+                {theme===th&&<span style={{marginLeft:"auto",fontSize:18}}>✓</span>}
+              </button>
+            ))}
+          </div>
+        </div>}
+      </div>
+    </div>
+  </>);
+}
+
+/* ════════════════════════════════════════
+   MAIN APP
+   ════════════════════════════════════════ */
+function App(){
+  const [lens,setLens]=useState("AAPL");
+  const [theme,setTheme]=useState("limestone");
+  const [page,setPage]=useState("landing");
+  const [showCtrl,setShowCtrl]=useState(false);
+  const mob=useIsMobile();
+  const t=TH[theme];
+  const v=V[lens]||V.AAPL;
+  const isApp=APP_PAGES.includes(page);
+
+  const sitePages={
+    landing:<Landing t={t} v={v} setPage={setPage} mob={mob}/>,
+    platform:<Platform t={t} v={v} setPage={setPage} mob={mob}/>,
+    science:<Science t={t} v={v} mob={mob}/>,
+    pricing:<Pricing t={t} v={v} setPage={setPage} mob={mob}/>,
+    about:<About t={t} v={v} setPage={setPage} mob={mob}/>,
+    signin:<SignIn t={t} v={v} setPage={setPage} mob={mob}/>,
+    privacy:<Legal t={t} v={v} type="privacy" mob={mob}/>,
+    terms:<Legal t={t} v={v} type="terms" mob={mob}/>,
+    compliance:<Legal t={t} v={v} type="compliance" mob={mob}/>,
+  };
+  const appPages={
+    dashboard:<AppDashboard t={t} mob={mob}/>,
+    athena:<AppAthena t={t} mob={mob}/>,
+    biomarkers:<AppBiomarkers t={t} mob={mob}/>,
+    upload:<AppUpload t={t} mob={mob}/>,
+    "verify-meds":<AppVerifyMeds t={t} mob={mob}/>,
+    "verify-genetics":<AppVerifyGenetics t={t} mob={mob}/>,
+    "data-streams":<AppDataStreams t={t} mob={mob}/>,
+    collisions:<AppCollisions t={t} mob={mob}/>,
+  };
+
+  return(
+    <div style={{background:t.bg,minHeight:"100vh",position:"relative",overflow:"hidden",fontFamily:t.bf}}>
+      <Noise t={t}/><Glow t={t}/>
+
+      {/* NAV — from reference (mono-aware logo + CTA button) with mobile support */}
+      <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:100,background:t.navBg,backdropFilter:t.blur?"blur(20px)":"none",borderBottom:`1px solid ${t.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:mob?"0 16px":"0 32px",height:mob?48:58}}>
+        <button onClick={()=>setPage("landing")} style={{background:"none",border:"none",cursor:"pointer",padding:0}}>
+          {v.mono?<span style={{fontSize:mob?10:11,fontFamily:t.lf,letterSpacing:"0.25em",color:t.accent,textTransform:"uppercase"}}>VITALIS</span>
+                 :<span style={{fontSize:mob?14:16,fontFamily:t.hf,fontWeight:600,letterSpacing:"0.08em",color:t.accent}}>Vitalis</span>}
+        </button>
+        {!mob&&<div style={{display:"flex",gap:24,alignItems:"center"}}>
+          {["platform","science","pricing","about"].map((key,i)=>(
+            <button key={key} onClick={()=>setPage(key)} style={{background:"none",border:"none",cursor:"pointer",padding:"4px 0",fontSize:11,fontFamily:t.lf,letterSpacing:v.mono?"0.1em":"0.04em",color:page===key?t.accentT:t.textT,textTransform:v.mono?"uppercase":"none",borderBottom:page===key?`1px solid ${t.accent}`:"1px solid transparent"}}>{v.nav[i]}</button>
+          ))}
+        </div>}
+        <div style={{display:"flex",gap:mob?6:8,alignItems:"center"}}>
+          {mob&&<>
+            <span style={{fontSize:8,fontFamily:t.lf,color:LENS_COLORS[lens],background:"rgba(0,0,0,0.3)",padding:"3px 6px",letterSpacing:"0.1em"}}>{lens}</span>
+            <span style={{fontSize:8,fontFamily:t.lf,color:THEME_COLORS[theme],background:"rgba(0,0,0,0.3)",padding:"3px 6px",textTransform:"capitalize"}}>{theme}</span>
+          </>}
+          <button onClick={()=>setShowCtrl(s=>!s)} style={{padding:mob?"8px 14px":"5px 10px",background:showCtrl?t.accent:"transparent",border:`1px solid ${showCtrl?t.accent:t.border}`,borderRadius:0,color:showCtrl?"#fff":t.textT,fontSize:mob?12:9,fontFamily:t.lf,letterSpacing:"0.12em",cursor:"pointer",textTransform:"uppercase",minHeight:mob?40:"auto"}}>⚙{mob?"":" "}</button>
+          {!mob&&<button onClick={()=>setPage("signin")} style={{padding:"7px 16px",background:"transparent",border:`1px solid ${t.border}`,borderRadius:0,color:t.textS,fontSize:10,fontFamily:t.lf,letterSpacing:"0.12em",cursor:"pointer",textTransform:"uppercase"}}>{v.signin}</button>}
+          {!mob&&<button onClick={()=>setPage("pricing")} style={{padding:"7px 18px",background:v.agg?t.red:t.accent,border:"none",borderRadius:0,color:"#fff",fontSize:10,fontFamily:t.lf,letterSpacing:"0.14em",cursor:"pointer",textTransform:"uppercase",fontWeight:600}}>{v.cta}</button>}
+        </div>
+      </nav>
+
+      {/* CONTROLS */}
+      {showCtrl&&!mob&&<DesktopControls lens={lens} setLens={setLens} theme={theme} setTheme={setTheme} page={page} setPage={setPage} onClose={()=>setShowCtrl(false)}/>}
+      {showCtrl&&mob&&<MobileSheet lens={lens} setLens={setLens} theme={theme} setTheme={setTheme} page={page} setPage={setPage} onClose={()=>setShowCtrl(false)} accent={t.accent}/>}
+
+      {/* CONTENT */}
+      <div style={{paddingTop:mob?48:58,position:"relative",zIndex:1}}>
+        <div style={{padding:isApp?(mob?"20px 16px 40px":"32px 40px 60px"):"0",maxWidth:isApp?960:"none",margin:isApp?"0 auto":"0"}} key={page+lens+theme}>
+          {sitePages[page]||appPages[page]||sitePages.landing}
+        </div>
+      </div>
+
+      {/* FOOTER — lens-aware legal labels from reference */}
+      <footer style={{borderTop:`1px solid ${t.border}`,padding:mob?"12px 16px":"20px 40px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,position:"relative",zIndex:1}}>
+        <span style={{fontSize:9,fontFamily:t.lf,letterSpacing:"0.15em",color:t.textT,textTransform:"uppercase"}}>© 2026 VITALIS · DUBAI · DIFC</span>
+        <div style={{display:"flex",gap:mob?12:20}}>
+          {[["privacy",v.lp],["terms",v.lt],["compliance",v.lc]].map(([key,label])=>(
+            <button key={key} onClick={()=>setPage(key)} style={{background:"none",border:"none",cursor:"pointer",fontSize:9,fontFamily:t.lf,letterSpacing:"0.12em",color:t.textT,textTransform:"uppercase"}}>{label}</button>
+          ))}
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
