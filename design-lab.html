@@ -8,7 +8,7 @@
 <title>Vitalis — Design Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap"/>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -41,11 +41,190 @@ input{font-size:16px!important;}
 <div style="font-size:13px;color:#666;margin-bottom:24px">Access Required</div>
 <input id="pin" type="password" placeholder="Enter password" style="padding:10px 16px;background:#1A1A2E;border:1px solid #2A2A40;color:#F0F0F4;font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center;width:220px;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('enterBtn').click()"/>
 <br/>
-<button id="enterBtn" onclick="if(document.getElementById('pin').value==='VitalisLab2026!'){sessionStorage.setItem('dl_auth','1');document.getElementById('gate').style.display='none';document.getElementById('lab').style.display='block';}else{document.getElementById('err').style.display='block';document.getElementById('pin').value='';}" style="margin-top:12px;padding:10px 24px;background:#3366FF;color:#fff;border:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;">ENTER</button>
+<button id="enterBtn" onclick="if(document.getElementById('pin').value==='Athena$Flywheel9!'){sessionStorage.setItem('dl_auth','1');document.getElementById('gate').style.display='none';document.getElementById('lab').style.display='block';}else{document.getElementById('err').style.display='block';document.getElementById('pin').value='';}" style="margin-top:12px;padding:10px 24px;background:#3366FF;color:#fff;border:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;">ENTER</button>
 <div id="err" style="display:none;color:#f87171;font-size:12px;margin-top:12px">Access denied</div>
 </div>
 </div>
 <div id="lab" style="display:none">
+<div id="mode-bar" style="background:#08080f;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 24px;display:flex;gap:0;position:sticky;top:0;z-index:200">
+<button type="button" id="mode-btn-ux" onclick="setMode('ux')" style="padding:8px 20px;font-size:10px;font-weight:600;letter-spacing:0.15em;font-family:'JetBrains Mono',monospace;border:none;cursor:pointer;background:transparent;color:#a78bfa;border-bottom:2px solid #a78bfa;">UX REVIEW</button>
+<button type="button" id="mode-btn-design" onclick="setMode('design')" style="padding:8px 20px;font-size:10px;font-weight:600;letter-spacing:0.15em;font-family:'JetBrains Mono',monospace;border:none;cursor:pointer;background:transparent;color:#444;border-bottom:2px solid transparent;">DESIGN LAB</button>
+</div>
+<div id="ux-review"></div>
+<script type="text/babel" data-presets="react">
+const UXApp = () => {
+  const {useState} = React;
+  const [tab, setTab] = useState("pages");
+  const [votes, setVotes] = useState({});
+  const vote = (did, oname) => setVotes(p => ({...p, [did]: oname}));
+  const voteCount = Object.keys(votes).length;
+
+  const mono = "'JetBrains Mono',monospace";
+  const sans = "'DM Sans','Inter',sans-serif";
+
+  const pages = [
+    {id:"dash",name:"Dashboard",status:"needs-polish",statusLabel:"NEEDS POLISH",
+      desc:"Landing page after login. Basic health overview cards.",
+      good:["Structure exists, needs visual upgrade"],
+      issues:["Sparse — doesn't feel premium","No clear call-to-action for new users","Upload entry point is hidden"]},
+    {id:"gp",name:"G-P Analysis",status:"live",statusLabel:"FUNCTIONAL",
+      desc:"The full DRA report — Athena's comprehensive health analysis. This IS the product.",
+      good:["Core value proposition","Real data rendering"],
+      issues:["Very text-heavy, hard to scan","No visual hierarchy between sections"]},
+    {id:"bio",name:"Biomarkers",status:"live",statusLabel:"FUNCTIONAL",
+      desc:"All 136+ biomarkers from lab reports. Grid/card layout.",
+      good:["All data displays correctly"],
+      issues:["No condensed table view","Hard to find specific markers","No trend charts yet"]},
+    {id:"prof",name:"Bio-Profile",status:"needs-work",statusLabel:"NEEDS WORK",
+      desc:"Medications & supplements (29 items). Has the paste intake box.",
+      good:["Paste intake works end-to-end"],
+      issues:["Just redirects to /medications","Needs to become richer health profile"]},
+    {id:"athena",name:"Athena",status:"shipped",statusLabel:"JUST SHIPPED",
+      desc:"Full-page AI chat. Orb animation, input-first, suggestion chips, streaming.",
+      good:["V2 design live","Working with real biomarker data"],
+      issues:["Response tone too dense — wall of text","Needs Quick/Deep mode toggle"]},
+  ];
+
+  const decisions = [
+    {id:1,title:"Athena's Voice — How Should She Talk?",priority:"high",
+      context:"Right now Athena dumps everything she knows in one massive response — every biomarker value, reference range, medication interaction. It reads like a clinical report, not a conversation. Which style feels right?",
+      options:[
+        {name:"Consultant",desc:"Lead with insight, not data. 'Your kidneys are working harder than they should.' Numbers only when asked. Short paragraphs, one follow-up.",color:"#2dd4bf"},
+        {name:"Clinical",desc:"Keep the depth but add structure. Headers, bold findings, collapsible details. Everything visible but organized.",color:"#60a5fa"},
+        {name:"Concierge",desc:"Ultra-brief first pass (2-3 sentences). 'I found 3 priorities. Want me to walk through them?' Depth on request.",color:"#a78bfa"}]},
+    {id:2,title:"Dashboard — What Should Users See First?",priority:"med",
+      context:"First thing after login. Needs to feel premium and give immediate value. Currently sparse.",
+      options:[
+        {name:"Health Score Hub",desc:"Big central score (0-100) with category breakdowns. Quick-glance, motivational.",color:"#4ade80"},
+        {name:"Priority Alerts",desc:"Lead with 'Top 3 things to act on' from latest analysis. Action-oriented.",color:"#fbbf24"},
+        {name:"Timeline View",desc:"Chronological: last upload, last chat, trending markers. Journey-focused.",color:"#fb7185"}]},
+    {id:3,title:"Quick / Deep — Athena Speed Toggle",priority:"med",
+      context:"Users choose between fast responses (2-4 sec) and thorough analysis (8-15 sec). What should we call the modes?",
+      options:[
+        {name:"Quick / Deep",desc:"Simple, honest. Quick for everyday. Deep for lab analysis.",color:"#2dd4bf"},
+        {name:"Express / Thorough",desc:"More descriptive. Express feels fast. Thorough implies completeness.",color:"#a78bfa"},
+        {name:"Chat / Analyze",desc:"Function-based. Chat for conversation, Analyze for deep work.",color:"#60a5fa"}]},
+    {id:4,title:"Theme Default for New Users",priority:"low",
+      context:"We have Clinic (light) and Command (dark) themes. Which should new users see first?",
+      options:[
+        {name:"Clinic (Light)",desc:"Clean, medical. Easier to read. Professional first impression.",color:"#e2e8f0"},
+        {name:"Command (Dark)",desc:"Premium, tech-forward. Matches 'intelligence platform' brand.",color:"#64748b"},
+        {name:"Auto (System)",desc:"Match user's OS light/dark setting automatically.",color:"#a78bfa"}]},
+    {id:5,title:"Bio-Profile — What Should This Page Become?",priority:"med",
+      context:"Currently just shows medications. Could become a richer health identity page.",
+      options:[
+        {name:"Meds + Context",desc:"Keep meds central, add: health goals, conditions, genetic notes, allergies.",color:"#fbbf24"},
+        {name:"Health Passport",desc:"One-page for your doctor: meds, conditions, key markers. Printable.",color:"#4ade80"},
+        {name:"Stay Simple",desc:"Medications only. Don't overload. Other info elsewhere.",color:"#64748b"}]},
+    {id:6,title:"Biomarkers — Cards vs Table",priority:"low",
+      context:"136+ markers. Currently visual card grid. Some prefer dense sortable tables.",
+      options:[
+        {name:"Cards Only",desc:"Visual cards with value, range, status. More visual, less dense.",color:"#2dd4bf"},
+        {name:"Table Only",desc:"Dense sortable table. Efficient for scanning many markers.",color:"#60a5fa"},
+        {name:"Toggle Both",desc:"View toggle — switch between cards and table.",color:"#a78bfa"}]},
+    {id:7,title:"Navigation Order",priority:"low",
+      context:"Current: Dashboard → G-P Analysis → Biomarkers → Bio-Profile → Athena. Right?",
+      options:[
+        {name:"Keep Current",desc:"Overview → reports → data → profile → chat. Logical.",color:"#4ade80"},
+        {name:"Athena Prominent",desc:"Move Athena to position 2. It's the star — why bury it?",color:"#fbbf24"},
+        {name:"Simplify to 3",desc:"Dashboard, Analysis (merge G-P+Biomarkers), Athena.",color:"#fb7185"}]},
+  ];
+
+  const prioStyles = {
+    high:{bg:"rgba(251,113,133,0.08)",bdr:"rgba(251,113,133,0.2)",c:"#fb7185",l:"HIGH PRIORITY"},
+    med:{bg:"rgba(251,191,36,0.08)",bdr:"rgba(251,191,36,0.2)",c:"#fbbf24",l:"MEDIUM"},
+    low:{bg:"rgba(96,165,250,0.08)",bdr:"rgba(96,165,250,0.2)",c:"#60a5fa",l:"NICE TO HAVE"},
+  };
+  const statusColors = {
+    live:{bg:"rgba(74,222,128,0.1)",c:"#4ade80"},
+    shipped:{bg:"rgba(45,212,191,0.1)",c:"#2dd4bf"},
+    "needs-polish":{bg:"rgba(251,191,36,0.1)",c:"#fbbf24"},
+    "needs-work":{bg:"rgba(251,191,36,0.1)",c:"#fbbf24"},
+  };
+
+  const h = (tag, props, ...children) => React.createElement(tag, props, ...children);
+
+  return h("div", {style:{background:"#08080f",minHeight:"100vh",color:"#e2e8f0",fontFamily:sans}},
+
+    h("div",{style:{padding:"28px 24px 0"}},
+      h("h2",{style:{fontSize:22,fontWeight:600,marginBottom:6}},"Hey Zainab 👋"),
+      h("p",{style:{color:"#94a3b8",fontSize:14,lineHeight:1.6,maxWidth:640,marginBottom:24}},
+        "Quick UX review for Vitalis. Check the pages, then go to Decisions to tap your preferences. Gut reactions — no wrong answers.")),
+
+    h("div",{style:{display:"flex",borderBottom:"1px solid rgba(255,255,255,0.06)",margin:"0 24px",gap:0}},
+      [{id:"pages",l:"PAGES"},{id:"decisions",l:"DECISIONS ("+decisions.length+")"},{id:"summary",l:"PICKS"+(voteCount>0?" ("+voteCount+")":"")}].map(t=>
+        h("button",{key:t.id,onClick:()=>setTab(t.id),style:{padding:"12px 20px",fontSize:10,fontWeight:600,letterSpacing:"0.15em",fontFamily:mono,background:"none",border:"none",borderBottom:"2px solid "+(tab===t.id?"#a78bfa":"transparent"),color:tab===t.id?"#a78bfa":"#444",cursor:"pointer"}},t.l))),
+
+    tab==="pages" && h("div",{style:{padding:24}},
+      h("div",{style:{display:"flex",background:"#111827",border:"1px solid #1e293b",borderRadius:10,overflow:"hidden",marginBottom:20,flexWrap:"wrap"}},
+        ["Dashboard","G-P Analysis","Biomarkers","Bio-Profile","Athena","☀️"].map((n,i)=>
+          h("div",{key:n,style:{padding:"12px 16px",fontSize:12,fontWeight:500,color:i===0?"#2dd4bf":"#64748b",borderBottom:i===0?"2px solid #2dd4bf":"2px solid transparent",flex:i===5?"0 0 auto":"1",textAlign:"center",background:i===0?"rgba(45,212,191,0.04)":"transparent"}},n))),
+      h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,marginBottom:24}},
+        pages.map(pg=>{
+          const sc=statusColors[pg.status]||statusColors.live;
+          return h("div",{key:pg.id,style:{background:"#111827",border:"1px solid #1e293b",borderRadius:10,overflow:"hidden"}},
+            h("div",{style:{padding:"12px 16px",borderBottom:"1px solid #1e293b",display:"flex",alignItems:"center",justifyContent:"space-between"}},
+              h("span",{style:{fontSize:13,fontWeight:600}},pg.name),
+              h("span",{style:{fontSize:9,fontFamily:mono,padding:"2px 8px",borderRadius:4,fontWeight:600,color:sc.c,background:sc.bg}},pg.statusLabel)),
+            h("div",{style:{padding:16}},
+              h("p",{style:{color:"#94a3b8",fontSize:12,lineHeight:1.6,marginBottom:10}},pg.desc),
+              pg.good.map((g,i)=>h("div",{key:"g"+i,style:{color:"#4ade80",fontSize:11,display:"flex",gap:6,marginBottom:4}},h("span",null,"✓"),h("span",null,g))),
+              pg.issues.map((x,i)=>h("div",{key:"i"+i,style:{color:"#fb7185",fontSize:11,display:"flex",gap:6,marginBottom:4}},h("span",null,"⚠"),h("span",null,x)))))})),
+      h("h3",{style:{fontSize:15,fontWeight:600,marginBottom:6}},"Athena's Tone — Before & After"),
+      h("p",{style:{color:"#64748b",fontSize:12,marginBottom:14}},"The biggest UX issue. Current vs target:"),
+      h("div",{style:{background:"#111827",border:"1px solid rgba(251,113,133,0.2)",borderRadius:8,padding:16,marginBottom:10}},
+        h("div",{style:{fontSize:10,fontWeight:600,letterSpacing:"0.1em",fontFamily:mono,color:"#fb7185",marginBottom:8}},"❌ CURRENT — WALL OF TEXT"),
+        h("p",{style:{color:"#94a3b8",fontSize:12,lineHeight:1.7}},
+          "\"Your eGFR at 74 mL/min looks technically above the clinical threshold, but when I pair this with your Cystatin C at 1.05 mg/L (reference range 0.5-1 mg/L), which is above the clinical range and well beyond our longevity target of <0.90 mg/L, I see early functional stress that your standard creatinine is not fully capturing...\"")),
+      h("div",{style:{background:"#111827",border:"1px solid rgba(74,222,128,0.2)",borderRadius:8,padding:16}},
+        h("div",{style:{fontSize:10,fontWeight:600,letterSpacing:"0.1em",fontFamily:mono,color:"#4ade80",marginBottom:8}},"✅ TARGET — CONVERSATIONAL"),
+        h("p",{style:{color:"#94a3b8",fontSize:12,lineHeight:1.7}},
+          h("strong",{style:{color:"#e2e8f0"}},"Your kidneys are working harder than they should."),
+          " Your standard creatinine looks fine, but your Cystatin C tells a different story — it's above both the clinical range and our longevity target. This is early signal we catch before it becomes a problem.",
+          h("br"),h("br"),
+          "Want me to walk through the numbers, or jump straight to what we can do about it?"))),
+
+    tab==="decisions" && h("div",{style:{padding:24,display:"flex",flexDirection:"column",gap:16}},
+      decisions.map(d=>{
+        const ps=prioStyles[d.priority];
+        const sel=votes[d.id];
+        return h("div",{key:d.id,style:{background:"#111827",border:"1px solid #1e293b",borderRadius:10,padding:20}},
+          h("span",{style:{fontSize:9,fontFamily:mono,padding:"2px 8px",borderRadius:4,color:ps.c,background:ps.bg,border:"1px solid "+ps.bdr,fontWeight:600,letterSpacing:"0.05em"}},ps.l),
+          h("h4",{style:{fontSize:15,fontWeight:600,marginTop:8,marginBottom:4}},d.title),
+          h("p",{style:{color:"#64748b",fontSize:12,lineHeight:1.6,marginBottom:14}},d.context),
+          h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}},
+            d.options.map(o=>{
+              const isSel=sel===o.name;
+              return h("button",{key:o.name,onClick:()=>vote(d.id,o.name),style:{background:isSel?o.color+"11":"#1a2234",border:"1px solid "+(isSel?o.color+"66":"#1e293b"),borderRadius:8,padding:14,cursor:"pointer",textAlign:"left",transition:"all 0.2s",outline:"none",position:"relative",fontFamily:sans}},
+                isSel&&h("span",{style:{position:"absolute",top:8,right:10,fontSize:12,color:o.color}},"✓"),
+                h("h5",{style:{fontSize:13,fontWeight:600,color:isSel?o.color:"#e2e8f0",marginBottom:4}},o.name),
+                h("p",{style:{fontSize:11,color:"#64748b",lineHeight:1.5}},o.desc))})))})),
+
+    tab==="summary" && h("div",{style:{padding:24}},
+      h("h3",{style:{fontSize:16,fontWeight:600,marginBottom:6}},"Your Picks"),
+      h("p",{style:{color:"#64748b",fontSize:13,marginBottom:20}},
+        voteCount===0?"No picks yet — go to Decisions and tap!"
+        :voteCount===decisions.length?"All "+decisions.length+" decided! 🎉 Screenshot this."
+        :voteCount+" of "+decisions.length+" decided."),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        decisions.map(d=>{
+          const picked=votes[d.id];
+          const opt=d.options.find(o=>o.name===picked);
+          return h("div",{key:d.id,style:{background:"#111827",border:"1px solid #1e293b",borderRadius:8,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}},
+            h("span",{style:{fontSize:12,fontWeight:600}},d.title),
+            picked
+              ?h("span",{style:{fontSize:12,fontWeight:600,color:opt?opt.color:"#2dd4bf"}},"✓ "+picked)
+              :h("span",{style:{fontSize:11,color:"#444",fontStyle:"italic"}},"—"))})),
+      voteCount>0&&h("div",{style:{marginTop:24,background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.15)",borderRadius:10,padding:16}},
+        h("p",{style:{fontSize:12,color:"#a78bfa",fontWeight:500}},"📋 Screenshot this and share with Babar — we'll build based on your picks."))),
+
+    h("div",{style:{padding:"16px 24px",borderTop:"1px solid rgba(255,255,255,0.03)",display:"flex",justifyContent:"space-between",fontSize:8,color:"#1e293b",fontFamily:mono,letterSpacing:"0.1em",marginTop:40}},
+      h("span",null,"ArsAI · DIFC DUBAI"),h("span",null,"VITALIS UX REVIEW · S5"))
+  );
+};
+ReactDOM.createRoot(document.getElementById('ux-review')).render(React.createElement(UXApp));
+</script>
+<div id="design-lab" style="display:none">
 <div id="root"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:Inter,system-ui,sans-serif;color:#666;font-size:14px;text-align:center;padding:20px;"><div style="margin-bottom:8px;">Loading Vitalis Design Lab…</div><div style="font-size:11px;color:#999;">Requires WiFi for fonts and React</div></div></div>
 <script type="text/babel" data-presets="react">
 const {useState,useEffect,useRef,useCallback}=React;
@@ -864,6 +1043,10 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</div>
+<script>
+function setMode(mode){var ux=document.getElementById('ux-review'),dl=document.getElementById('design-lab'),bu=document.getElementById('mode-btn-ux'),bd=document.getElementById('mode-btn-design');if(mode==='ux'){ux.style.display='block';dl.style.display='none';bu.style.color='#a78bfa';bu.style.borderBottom='2px solid #a78bfa';bd.style.color='#444';bd.style.borderBottom='none';}else{ux.style.display='none';dl.style.display='block';bd.style.color='#a78bfa';bd.style.borderBottom='2px solid #a78bfa';bu.style.color='#444';bu.style.borderBottom='none';}}
 </script>
 </div>
 <script>
